@@ -33,75 +33,92 @@ public class UIManager : Singleton<UIManager>
     public void ShowMenu()
     {
         HideAllPanels();
-        menuPanel.SetActive(true);
-        backButton.SetActive(false);
+        if (menuPanel != null)
+            menuPanel.SetActive(true);
+        if (backButton != null)
+            backButton.SetActive(false);
     }
 
     public void ShowGameSelection()
     {
         HideAllPanels();
-        gameSelectionPanel.SetActive(true);
-        backButton.SetActive(true);
-        pauseButton.SetActive(false);
+        if (gameSelectionPanel != null)
+            gameSelectionPanel.SetActive(true);
+        if (backButton != null)
+            backButton.SetActive(true);
+        if (pauseButton != null)
+            pauseButton.SetActive(false);
     }
 
     public void ShowToySelection()
     {
         HideAllPanels();
-        toySelectionPanel.SetActive(true);
-        backButton.SetActive(true);
-        pauseButton.SetActive(false);
+        if (toySelectionPanel != null)
+            toySelectionPanel.SetActive(true);
+        if (backButton != null)
+            backButton.SetActive(true);
+        if (pauseButton != null)
+            pauseButton.SetActive(false);
     }
 
     public void ShowGameplay()
     {
         HideAllPanels();
-        gameplayPanel.SetActive(true);
-        backButton.SetActive(false);
-        pauseButton.SetActive(true);
+        if (gameplayPanel != null)
+            gameplayPanel.SetActive(true);
+        if (backButton != null)
+            backButton.SetActive(false);
+        if (pauseButton != null)
+            pauseButton.SetActive(true);
     }
 
-    public void ShowToyPlay() {         
+    public void ShowToyPlay()
+    {
         HideAllPanels();
-        foreach (var panel in toyUIPanels)
+        if (toyUIPanels != null)
         {
-            panel.SetActive(true);
+            foreach (var panel in toyUIPanels)
+            {
+                if (panel != null)
+                    panel.SetActive(true);
+            }
         }
-        backButton.SetActive(true);
-        pauseButton.SetActive(false);
+        if (backButton != null)
+            backButton.SetActive(true);
+        if (pauseButton != null)
+            pauseButton.SetActive(false);
     }   
 
 
     public void ShowGameUI(int gameIndex)
     {
         HideAllPanels();
-        foreach (var panel in gameUIPanels)
-        {
-            panel.SetActive(true);
-        }
 
-       if(gameIndex < gameUIPanels.Length && gameUIPanels[gameIndex] != null)
+        if (gameUIPanels != null && gameIndex >= 0 && gameIndex < gameUIPanels.Length && gameUIPanels[gameIndex] != null)
         {
             gameUIPanels[gameIndex].SetActive(true);
         }
-        backButton.SetActive(true);
-        pauseButton.SetActive(false);
+
+        if (backButton != null)
+            backButton.SetActive(true);
+        if (pauseButton != null)
+            pauseButton.SetActive(false);
     }
 
 
     public void ShowToyUI(int toyIndex)
     {
         HideAllPanels();
-        foreach (var panel in toyUIPanels)
-        {
-            panel.SetActive(true);
-        }
-        if (toyIndex < toyUIPanels.Length && toyUIPanels[toyIndex] != null)
+
+        if (toyUIPanels != null && toyIndex >= 0 && toyIndex < toyUIPanels.Length && toyUIPanels[toyIndex] != null)
         {
             toyUIPanels[toyIndex].SetActive(true);
         }
-        backButton.SetActive(true);
-        pauseButton.SetActive(false);
+
+        if (backButton != null)
+            backButton.SetActive(true);
+        if (pauseButton != null)
+            pauseButton.SetActive(false);
     }
 
 
@@ -109,38 +126,56 @@ public class UIManager : Singleton<UIManager>
     public void ShowSetting()
     {
         HideAllPanels();
-        settingPanel.SetActive(true);
-        backButton.SetActive(true);
-        pauseButton.SetActive(false);
+        if (settingPanel != null)
+            settingPanel.SetActive(true);
+        if (backButton != null)
+            backButton.SetActive(true);
+        if (pauseButton != null)
+            pauseButton.SetActive(false);
     }
 
     private void HideAllPanels()
     {
-        menuPanel.SetActive(false);
-        gameSelectionPanel.SetActive(false);
-        toySelectionPanel.SetActive(false);
-        gameplayPanel.SetActive(false);
-        settingPanel.SetActive(false);
-        foreach (var panel in gameUIPanels)
+        if (menuPanel != null)
+            menuPanel.SetActive(false);
+        if (gameSelectionPanel != null)
+            gameSelectionPanel.SetActive(false);
+        if (toySelectionPanel != null)
+            toySelectionPanel.SetActive(false);
+        if (gameplayPanel != null)
+            gameplayPanel.SetActive(false);
+        if (settingPanel != null)
+            settingPanel.SetActive(false);
+
+        if (gameUIPanels != null)
         {
-            if (panel != null)
-                panel.SetActive(false);
+            foreach (var panel in gameUIPanels)
+            {
+                if (panel != null)
+                    panel.SetActive(false);
+            }
         }
-        foreach (var panel in toyUIPanels)
+
+        if (toyUIPanels != null)
         {
-            if (panel != null)
-                panel.SetActive(false);
+            foreach (var panel in toyUIPanels)
+            {
+                if (panel != null)
+                    panel.SetActive(false);
+            }
         }
     }
 
     public void OneGameSelection(int gameIndex)
     {
+        Debug.Log("Selected game index: " + gameIndex);
         GameManager.Ins.StartGame(gameIndex);
         ShowGameUI(gameIndex);
     }
 
     public void OneToySelection(int toyIndex)
     {
+        Debug.Log("Selected toy index: " + toyIndex);
         GameManager.Ins.StartToy(toyIndex);
         ShowToyUI(toyIndex);
     }

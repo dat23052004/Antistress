@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd14464d3a134634da121c76d13ec5bb, type: 3}
+  m_Name: GameConfig
+  m_EditorClassIdentifier: 
+  games:
+  - id: 1
+    displayName: game1
+    icon: {fileID: 21300000, guid: 79f9cc214995948488008c28aeeb59ae, type: 3}
+    uiPanel: {fileID: 919132149155446097, guid: 55debf1aaee26d645b62a99362e8dc5f, type: 3}
+  - id: 2
+    displayName: game2
+    icon: {fileID: 21300000, guid: a9cb99ccdd9454a42bf0647ca704f9c4, type: 3}
+    uiPanel: {fileID: 919132149155446097, guid: afb53378440657041a3f77ba604b1049, type: 3}
+  - id: 3
+    displayName: game3
+    icon: {fileID: 21300000, guid: 4dea99df2fca4ad4687cc686d484cd15, type: 3}
+    uiPanel: {fileID: 919132149155446097, guid: afb53378440657041a3f77ba604b1049, type: 3}
+  toys: []
