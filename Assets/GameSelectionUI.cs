@@ -19,12 +19,6 @@ public class GameSelectionUI : MonoBehaviour
     public void PopulateDrawers()
     {
 
-        // Xóa các ngăn kéo cũ
-        foreach (Transform child in drawerContainer)
-        {
-            Destroy(child.gameObject);
-        }
-
         for (int i = 0; i < gameConfig.toys.Count; i += 2)
         {
             var drawer = Instantiate(drawerPrefab, drawerContainer);
@@ -61,7 +55,6 @@ public class GameSelectionUI : MonoBehaviour
         }
 
         Instantiate(drawerCustomerPrefab, drawerContainer);
-
         for (int i = 0; i < gameConfig.games.Count; i += 2)
         {
             var drawer = Instantiate(drawerPrefab, drawerContainer);
@@ -100,7 +93,6 @@ public class GameSelectionUI : MonoBehaviour
             }
 
         }
-
     }
 
 

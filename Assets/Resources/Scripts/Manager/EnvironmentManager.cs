@@ -6,20 +6,16 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class EnvironmentManager : Singleton<EnvironmentManager>
 {
 
-    [Header("Environments")]
-    public GameObject menuEnvironment;
-    public GameObject[] gameEnvironment;
-    public GameObject[] toyEnvironment;
+    [SerializeField] private EnvironmentData environmentData;
 
-    [Header("Lighting")]
-    public Light[] environmentLights;
-
-    private int currentEnvironmentIndex = -1;
     private GameObject currentEnvironment;
 
     protected override void Initialize()
@@ -27,90 +23,78 @@ public class EnvironmentManager : Singleton<EnvironmentManager>
         SwitchToMenu();
     }
 
-    public void SwitchToMenu()
-    {
-        DeactivateAllEnvironments();
+    public void SwitchToMenu() => LoadEnvironmentByType(EnvironmentType.Menu, 0);
+    public void SwitchToToy(int toyIndex) => LoadEnvironmentByType(EnvironmentType.Toy, toyIndex);
+    public void SwitchToGame(int gameIndex) => LoadEnvironmentByType(EnvironmentType.Game, gameIndex);
 
-        if(menuEnvironment != null)
+    private void LoadEnvironmentByType(EnvironmentType type, int id)
+    {
+        var env = environmentData.environments.FirstOrDefault(e => e.type == type && e.environmentId == id);
+
+        if(env == null)
         {
-            menuEnvironment.SetActive(true);
-            currentEnvironment = menuEnvironment;
-            currentEnvironmentIndex = -1;
+            Debug.LogError($"Environment of type {type} with ID {id} not found!");
+            return;
         }
 
-        CameraManager.Ins.MoveToMenuPosition();
-        SetEnvironmentLighting(0);
+        StartCoroutine(LoadEnvironmentAsync(env));
     }
 
-    public void SwitchToGame(int gameIndex)
+    private IEnumerator LoadEnvironmentAsync(EnvironmentEntry env)
     {
-        if (gameIndex < 0 || gameIndex >= gameEnvironment.Length) return;
-        
-        StartCoroutine(TransactionToEnvironment(() =>
+        TransitionManager.Ins.StartLoading();
+        // Giải phóng cũ
+        if (currentEnvironment != null)
         {
-            DeactivateAllEnvironments();
-            gameEnvironment[gameIndex].SetActive(true);
-            currentEnvironment = gameEnvironment[gameIndex];
-            currentEnvironmentIndex = gameIndex;
-            CameraManager.Ins.MoveToGamePosition(gameIndex);
-            UIManager.Ins.ShowGameUI(gameIndex);
-            SetEnvironmentLighting(gameIndex + 1);
-        }));  
-    }
+            Debug.Log($"Loading environment: {currentEnvironment}");
 
-    public void SwitchToToy(int toyIndex)
-    {
-        if (toyIndex < 0 || toyIndex >= toyEnvironment.Length) return;
-        StartCoroutine(TransactionToEnvironment(() =>
-        {
-            DeactivateAllEnvironments();
-            toyEnvironment[toyIndex].SetActive(true);
-            currentEnvironment = toyEnvironment[toyIndex];
-            currentEnvironmentIndex = toyIndex;
-            CameraManager.Ins.MoveToToyPosition(toyIndex);
-            UIManager.Ins.ShowToyUI(toyIndex);
-            SetEnvironmentLighting(toyIndex + 1 + gameEnvironment.Length);
-        }));
-    }
-
-    private IEnumerator TransactionToEnvironment(Action onTransition)
-    {
-        TransitionManager.Ins?.StartTransition();
-
-        yield return new WaitForSeconds(0.2f);
-
-        onTransition?.Invoke();
-
-        yield return new WaitForSeconds(0.3f);
-
-        TransitionManager.Ins?.EndTransition();
-    }
-
-    private void SetEnvironmentLighting(int lightIndex)
-    {
-        foreach(var light in environmentLights)
-        {
-            if (light != null) light.enabled = false;
+            Addressables.ReleaseInstance(currentEnvironment);
+            currentEnvironment = null;
         }
 
-        if(lightIndex >= 0 && lightIndex < environmentLights.Length && environmentLights[lightIndex] != null)
+        if (env.type == EnvironmentType.Menu)
         {
-            environmentLights[lightIndex].enabled = true;
+            CameraManager.Ins.MoveToPosition(env.cameraPosition, env.cameraRotation);
+
+            if (env.skybox != null)
+                RenderSettings.skybox = env.skybox;
+
+            UIManager.Ins.ShowMenu();
+
+            TransitionManager.Ins.EndLoading();
+            yield break; // ❌ Dừng luôn, không load prefab Addressables
         }
 
+        // Bắt đầu load thật bằng Addressables
+        AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(env.environmentKey);
+        while (!handle.IsDone)
+        {
+            TransitionManager.Ins.UpdateLoadingProgress(handle.PercentComplete);
+            yield return null;
+        }
+
+        if (handle.Status == AsyncOperationStatus.Succeeded)
+        {
+            currentEnvironment = Instantiate(handle.Result);
+            currentEnvironment.name = env.environmentKey;
+
+            // Cập nhật camera
+            CameraManager.Ins.MoveToPosition(env.cameraPosition, env.cameraRotation);
+
+            // Cập nhật skybox
+            if (env.skybox != null)
+                RenderSettings.skybox = env.skybox;
+
+            //// Âm thanh nền (nếu có)
+            //if (env.backgroundMusic != null)
+            //    AudioManager.Ins?.PlayMusic(env.backgroundMusic);
+        }
+        else
+        {
+            Debug.LogError($"❌ Failed to load environment: {env.environmentKey}");
+        }
+
+        TransitionManager.Ins.EndLoading();
     }
 
-    private void DeactivateAllEnvironments()
-    {
-        if (menuEnvironment != null && menuEnvironment.activeSelf) menuEnvironment.SetActive(false);
-        foreach (var env in gameEnvironment)
-        {
-            if (env != null && env.activeSelf) env.SetActive(false);
-        }
-        foreach (var env in toyEnvironment)
-        {
-            if (env != null && env.activeSelf) env.SetActive(false);
-        }
-    }
 }
-

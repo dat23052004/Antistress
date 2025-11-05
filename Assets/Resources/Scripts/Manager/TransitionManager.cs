@@ -4,46 +4,45 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 
 public class TransitionManager : Singleton<TransitionManager>
 {
-    [Header("Transition Effects")]
-    public GameObject transitionPanel;
-    public Animator transitionAnimator;
+    [Header("Transition UI")]
+    public GameObject loadingPanel;
+    public Image progressBar;
+    public TMP_Text loadingText;
 
     protected override void Initialize()
     {
-        if (transitionPanel != null)
-            transitionPanel.SetActive(false);
+        if (loadingPanel) loadingPanel.SetActive(false);
     }
 
-    public void StartTransition()
+    public void StartLoading()
     {
-        if (transitionPanel != null)
-        {
-            transitionPanel.SetActive(true);
-            if (transitionAnimator != null)
-                transitionAnimator.SetTrigger("FadeIn");
-        }
-
-        AudioManager.Ins?.PlayTransitionSound();
+        if (loadingPanel) loadingPanel.SetActive(true);
+        if (progressBar) progressBar.fillAmount = 0;
+        if (loadingText) loadingText.text = "Loading...";
     }
 
-    public void EndTransition()
+    public void UpdateLoadingProgress(float progress)
     {
-        if (transitionAnimator != null)
-            transitionAnimator.SetTrigger("FadeOut");
-
-        StartCoroutine(HideTransitionPanel());
+        if (progressBar) progressBar.fillAmount = progress;
+        if (loadingText) loadingText.text = $"Loading {Mathf.RoundToInt(progress * 100)}%";
     }
 
-    private IEnumerator HideTransitionPanel()
+    public void EndLoading()
     {
-        yield return new WaitForSeconds(0.5f);
-        if (transitionPanel != null)
-            transitionPanel.SetActive(false);
+        StartCoroutine(HideLoadingRoutine());
+    }
+
+    private IEnumerator HideLoadingRoutine()
+    {
+        yield return new WaitForSeconds(0.3f);
+        if (loadingPanel) loadingPanel.SetActive(false);
     }
 }
 
