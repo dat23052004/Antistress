@@ -14,11 +14,6 @@ public class UIManager : Singleton<UIManager>
     public GameObject gameplayPanel;
     public GameObject settingPanel;
 
-    protected override void Initialize()
-    {
-
-    }   
-
     public void ShowMenu()
     {
         HideAllPanels();
