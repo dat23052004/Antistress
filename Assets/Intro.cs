@@ -86,7 +86,6 @@ public class Intro : MonoBehaviour
 
     private IEnumerator LoadMainSceneAsync()
     {
-        Debug.Log("loadiing main scene");
 
         TransitionManager.Ins?.StartLoading();
         yield return null;
@@ -116,6 +115,8 @@ public class Intro : MonoBehaviour
 
         TransitionManager.Ins?.UpdateLoadingProgress(1f);
         yield return new WaitForSeconds(0.2f);
+        TransitionManager.Ins.EndLoading();
+        yield return null;
         async.allowSceneActivation = true;
     }
 

@@ -7,38 +7,47 @@ public class TransitionManager : Singleton<TransitionManager>
 {
     [Header("Transition UI")]
     [SerializeField] private GameObject loadingPanel;
+    [SerializeField] private GameObject progressBar;
     [SerializeField] private Image fillImage;
     [SerializeField] private TextMeshProUGUI loadingText;
 
     private float currentProgress = 0f;
     private Coroutine progressRoutine;
 
+    private bool simpleMode = false;
     protected override void Initialize()
     {
         DontDestroyOnLoad(this.gameObject);
         if (loadingPanel) loadingPanel.SetActive(false);
     }
 
-    public void StartLoading()
+    public void StartLoading(bool simple = false)
     {
-        Debug.Log("load");
+        simpleMode = simple;
+
         if (progressRoutine != null)
         {
             StopCoroutine(progressRoutine);
             progressRoutine = null;
         }
 
-        if (loadingPanel != null)
-            loadingPanel.SetActive(true);
+        if (loadingPanel != null) loadingPanel.SetActive(true);
+
+        if (progressBar) progressBar.SetActive(!simpleMode);
 
         currentProgress = 0f;
 
-        if (fillImage != null) fillImage.fillAmount = 0f;
-        if (loadingText != null) loadingText.text = "0%";
+        if (!simpleMode)
+        {
+            if (fillImage) fillImage.fillAmount = 0f;
+            if (loadingText) loadingText.text = "0%";
+        }
     }
 
     public void UpdateLoadingProgress(float progress)
     {
+        if (simpleMode) return;
+
         progress = Mathf.Clamp01(progress);
         if (progressRoutine != null)
             StopCoroutine(progressRoutine);
@@ -48,6 +57,7 @@ public class TransitionManager : Singleton<TransitionManager>
 
     private IEnumerator UpdateProgressSmooth(float progress)
     {
+
         while (currentProgress < progress)
         {
             currentProgress = Mathf.MoveTowards(currentProgress, progress, Time.deltaTime * 0.8f);
@@ -74,27 +84,7 @@ public class TransitionManager : Singleton<TransitionManager>
         if (loadingText != null) loadingText.text = "100%";
         yield return new WaitForSeconds(0.2f);
         if (loadingPanel != null) loadingPanel.SetActive(false);
-    }
 
-    public IEnumerator LoadWithMinimumTime(float targetProgress, float minDisplayTime = 1.2f)
-    {
-        // targetProgress = tiến trình thực (vd async.progress)
-        // minDisplayTime = thời gian tối thiểu hiển thị loading
-
-        float timer = 0f;
-        float startProgress = currentProgress;
-
-        while (timer < minDisplayTime)
-        {
-            timer += Time.deltaTime;
-            float fakeProgress = Mathf.Lerp(startProgress, targetProgress, timer / minDisplayTime);
-
-            UpdateLoadingProgress(fakeProgress);
-            yield return null;
-        }
-
-        // Đảm bảo hiển thị 100%
-        UpdateLoadingProgress(1f);
-        yield return new WaitForSeconds(0.2f);
+        simpleMode = false;
     }
 }

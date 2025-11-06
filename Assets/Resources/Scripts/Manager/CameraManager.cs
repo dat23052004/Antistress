@@ -51,6 +51,14 @@ public class CameraManager : Singleton<CameraManager>
         isTransitioning = false;
     }
 
+    public void SetToPositionInstant(Vector3 targetPos, Vector3 targetRot)
+    {
+        if (!mainCamera) return;
+
+        mainCamera.transform.position = targetPos;
+        mainCamera.transform.eulerAngles = targetRot;
+    }
+
 
 }
 
