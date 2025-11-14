@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_GUID: c594b4feb3b6bea43ad20a8287df283f
   m_SerializeEntries:
+  - m_GUID: 901d92c43ae1bd148bc0d9f26ccb5f56
+    m_Address: Toy _WoodenBlocks
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ff4217d59f896314b961b56bdc39a5be
     m_Address: Toy_ButtonSwitch
     m_ReadOnly: 0

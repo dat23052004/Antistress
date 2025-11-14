@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   environments:
   - environmentId: 0
-    environmentKey: 
-    type: 0
+    environmentKey: Toy_WoodenBlocks
+    type: 2
     environmentPrefab: {fileID: 0}
-    cameraPosition: {x: 0, y: 0, z: 0}
+    cameraPosition: {x: 0, y: 0, z: -10}
     cameraRotation: {x: 0, y: 0, z: 0}
     skybox: {fileID: 0}
     backgroundMusic: {fileID: 8300000, guid: ce5b0523b62745a46b17bcf7ec6237b7, type: 3}

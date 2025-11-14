@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Professional Drag & Throw Controller for both Mouse and Touch.
@@ -26,11 +27,11 @@ public class Block : MonoBehaviour
 
     [Header("Throw Settings")]
     [Tooltip("Force multiplier when throwing.")]
-    public float throwMultiplier = 6f;
+    public float throwMultiplier = 4f;
     [Tooltip("Minimum speed of hand to count as throw.")]
     public float throwThreshold = 3f;
     [Tooltip("Maximum force allowed when throwing.")]
-    public float maxThrowForce = 200f;
+    public float maxThrowForce = 100f;
 
     [Header("Platform Force Scaling")]
     [Tooltip("Scale down throw force when testing in Editor (mouse input).")]
@@ -44,6 +45,8 @@ public class Block : MonoBehaviour
     public float linearDefault = 0.2f;
     public float angularDefault = 0.05f;
 
+
+    //public ShadowController shadowController;
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -53,6 +56,9 @@ public class Block : MonoBehaviour
         rb.angularDamping = angularDefault;
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+
+        //if (shadowController)
+        //    shadowController.target = transform;
     }
 
     private void Update()
@@ -135,8 +141,6 @@ public class Block : MonoBehaviour
             torque = Mathf.Clamp(torque, -10f, 10f); // giới hạn an toàn
             rb.AddTorque(torque, ForceMode2D.Force);
         }
-
-
 
         // --- Khi thả ---
         if (isDragging && pointerUp)
