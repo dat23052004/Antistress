@@ -14,14 +14,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   environments:
   - environmentId: 0
-    environmentKey: Toy_WoodenBlocks
-    type: 2
+    environmentKey: 
+    type: 0
     environmentPrefab: {fileID: 0}
     cameraPosition: {x: 0, y: 0, z: -10}
     cameraRotation: {x: 0, y: 0, z: 0}
     skybox: {fileID: 0}
     backgroundMusic: {fileID: 8300000, guid: ce5b0523b62745a46b17bcf7ec6237b7, type: 3}
     ambientColor: {r: 0, g: 0, b: 0, a: 0}
+  - environmentId: 1
+    environmentKey: Toy_ButtonSwitch
+    type: 2
+    environmentPrefab: {fileID: 2981779105725330501, guid: ff4217d59f896314b961b56bdc39a5be, type: 3}
+    cameraPosition: {x: 0, y: 0, z: -10}
+    cameraRotation: {x: 0, y: 0, z: 0}
+    skybox: {fileID: 0}
+    backgroundMusic: {fileID: 8300000, guid: 58dda420687fb664bbb07406caa93b13, type: 3}
+    ambientColor: {r: 0.8238993, g: 0.4430401, b: 0.4430401, a: 0}
+  - environmentId: 0
+    environmentKey: Toy_WoodenBlocks
+    type: 2
+    environmentPrefab: {fileID: 4686843451527614234, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
+    cameraPosition: {x: 0, y: 0, z: -10}
+    cameraRotation: {x: 0, y: 0, z: 0}
+    skybox: {fileID: 0}
+    backgroundMusic: {fileID: 8300000, guid: 58dda420687fb664bbb07406caa93b13, type: 3}
+    ambientColor: {r: 0.8238993, g: 0.4430401, b: 0.4430401, a: 0}
   - environmentId: 1
     environmentKey: Toy_ButtonSwitch
     type: 2

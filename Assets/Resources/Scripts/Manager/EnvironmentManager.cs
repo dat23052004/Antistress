@@ -11,6 +11,11 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
+public interface IEnvironmentStart
+{
+    IEnumerator OnEnvironmentReady();
+}
+
 public class EnvironmentManager : Singleton<EnvironmentManager>
 {
 
@@ -59,23 +64,21 @@ public class EnvironmentManager : Singleton<EnvironmentManager>
         }
 
         // Bắt đầu load thật bằng Addressables
-        AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(env.environmentKey);
+        AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(env.environmentKey);
+
         while (!handle.IsDone)
         {
-            Debug.Log(handle);
             timer += Time.deltaTime;
             yield return null;
         }
-
         while (timer < minDisplayTime)
         {
             timer += Time.deltaTime;
             yield return null;
         }
-
         if (handle.Status == AsyncOperationStatus.Succeeded)
         {
-            currentEnvironment = Instantiate(handle.Result);
+            currentEnvironment = handle.Result;
             currentEnvironment.name = env.environmentKey;
             ApplyEnvironmentSettings(env);
         }
@@ -87,6 +90,12 @@ public class EnvironmentManager : Singleton<EnvironmentManager>
         }
         yield return null;
         TransitionManager.Ins.EndLoading();
+        var starter = currentEnvironment.GetComponent<IEnvironmentStart>();
+        if (starter != null)
+        {
+            yield return StartCoroutine(starter.OnEnvironmentReady());
+        }
+
     }
 
     private void ApplyEnvironmentSettings(EnvironmentEntry env)

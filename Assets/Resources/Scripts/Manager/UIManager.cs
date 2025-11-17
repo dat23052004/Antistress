@@ -16,6 +16,7 @@ public class UIManager : Singleton<UIManager>
 
     public void ShowMenu()
     {
+        Debug.Log("Show menu panel");
         HideAllPanels();
         if (menuPanel != null) menuPanel.SetActive(true);
     }

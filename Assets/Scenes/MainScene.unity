@@ -137,7 +137,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &76523990
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2184,27 +2184,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1088412263}
   m_CullTransparentMesh: 1
---- !u!1 &1088653454 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2793375689039768620, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-  m_PrefabInstance: {fileID: 5912514960749312618}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1088653456
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1088653454}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4d3bc0103aa576b42b38f268c8fab1ca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxLinearSpeed: 8
-  maxAngularSpeed: 200
-  extraLinearDrag: 3
-  extraAngularDrag: 4
 --- !u!1 &1103078975
 GameObject:
   m_ObjectHideFlags: 0
@@ -4806,82 +4785,6 @@ MonoBehaviour:
   m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
   m_EffectDistance: {x: 1, y: -1}
   m_UseGraphicAlpha: 1
---- !u!1001 &5912514960749312618
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 4564358201749061747, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4564358201749061747, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4564358201749061747, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4564358201749061747, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4564358201749061747, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4564358201749061747, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4564358201749061747, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4564358201749061747, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4564358201749061747, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4564358201749061747, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4686843451527614234, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      propertyPath: m_Name
-      value: Toy _WoodenBlocks
-      objectReference: {fileID: 0}
-    - target: {fileID: 7200276333642077653, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      propertyPath: m_Color.a
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7200276333642077653, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      propertyPath: m_Color.b
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7200276333642077653, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      propertyPath: m_Color.g
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7200276333642077653, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      propertyPath: m_Color.r
-      value: 1
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 2793375689039768620, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1088653456}
-  m_SourcePrefab: {fileID: 100100000, guid: 901d92c43ae1bd148bc0d9f26ccb5f56, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -4892,4 +4795,3 @@ SceneRoots:
   - {fileID: 1877377548}
   - {fileID: 522322007}
   - {fileID: 139942790}
-  - {fileID: 5912514960749312618}
