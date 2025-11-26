@@ -1,69 +1,68 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
+﻿using System;
+using Unity.VisualScripting;
+using UnityEngine;
 
-/// <summary>
-/// Professional Drag & Throw Controller for both Mouse and Touch.
-/// Handles natural feel, platform scaling, and debug visualization.
-/// </summary>
-[RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
-public class Block : MonoBehaviour
+public class LilyPad : MonoBehaviour
 {
+
     private Rigidbody2D rb;
     private Camera cam;
 
-    // --- Input state ---
-    private bool isDragging;
+   
+    // Drag state
+    private bool isDragging = false;
     private Vector3 lastPointerWorld;
     private Vector3 pointerVelocity;
     private Vector2 grabOffset;
 
-    // --- Debug ---
+    // Debug
     private Vector2 lastThrowForce;
     private bool showDebugLine = true;
 
+    public LayerMask lilyMask;
     [Header("Follow Settings")]
-    [Tooltip("How fast block follows pointer.")]
     public float followSpeed = 25f;
 
     [Header("Throw Settings")]
-    [Tooltip("Force multiplier when throwing.")]
-    public float throwMultiplier = 4f;
-    [Tooltip("Minimum speed of hand to count as throw.")]
-    public float throwThreshold = 3f;
-    [Tooltip("Maximum force allowed when throwing.")]
-    public float maxThrowForce = 100f;
-
-    [Header("Platform Force Scaling")]
-    [Tooltip("Scale down throw force when testing in Editor (mouse input).")]
-    public float editorForceScale = 0.3f; // reduce mouse sensitivity
+    public float throwMultiplier = 2.2f;
+    public float throwThreshold = 2.5f;
+    public float maxThrowForce = 40f;
+    public float editorForceScale = 0.25f;
 
     [Header("Damping")]
-    [Tooltip("Damping while dragging.")]
-    public float linearWhileDrag = 5f;
-    public float angularWhileDrag = 2f;
-    [Tooltip("Damping when released.")]
-    public float linearDefault = 0.2f;
-    public float angularDefault = 0.05f;
+    public float linearWhileDrag = 2f;
+    public float angularWhileDrag = 0.8f;
+
+    public float linearDefault = 0.6f;
+    public float angularDefault = 0.3f;
+
+    [Header("Water Drift")]
+    public float driftInterval = 1.2f;
+    public float driftForce = 0.15f;
+    public float driftTorque = 0.1f;
+
+    private float driftTimer = 0f;
 
 
-    //public ShadowController shadowController;
+    public static Action<LilySlot> OnLilyDestroyed;
+    [HideInInspector] public LilySlot mySlot;
+
+    public event Action<Vector3> OnPointerDownEvent;
+    public event Action<Vector3, float> OnPointerMoveEvent;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         cam = Camera.main;
-
         rb.linearDamping = linearDefault;
         rb.angularDamping = angularDefault;
-        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
-
-        //if (shadowController)
-        //    shadowController.target = transform;
     }
 
     private void Update()
     {
         HandlePointerInput();
+        HandleWaterDrift();
+        CheckAutoDestroy();
     }
 
     private void HandlePointerInput()
@@ -72,7 +71,6 @@ public class Block : MonoBehaviour
         bool pointerHeld = false;
         bool pointerUp = false;
         Vector3 pointerWorld = Vector3.zero;
-
 #if UNITY_EDITOR || UNITY_STANDALONE
         // --- Mouse input ---
         pointerDown = Input.GetMouseButtonDown(0);
@@ -100,14 +98,13 @@ public class Block : MonoBehaviour
         // --- Khi bắt đầu chạm hoặc nhấn ---
         if (pointerDown)
         {
-            Collider2D hit = Physics2D.OverlapPoint(pointerWorld);
+            Collider2D hit = Physics2D.OverlapPoint(pointerWorld,lilyMask);
             if (hit && hit.attachedRigidbody == rb)
             {
                 isDragging = true;
-
+                OnPointerDownEvent.Invoke(pointerWorld);
                 // ❗ LƯU OFFSET THEO LOCAL SPACE (điểm chạm trong toạ độ của block)
                 grabOffset = transform.InverseTransformPoint(pointerWorld);
-
                 lastPointerWorld = pointerWorld;
                 rb.linearDamping = linearWhileDrag;
                 rb.angularDamping = angularWhileDrag;
@@ -117,28 +114,28 @@ public class Block : MonoBehaviour
         // --- Khi giữ ---
         if (isDragging && pointerHeld)
         {
+            float speed = pointerVelocity.magnitude;
+            OnPointerMoveEvent?.Invoke(pointerWorld, speed);
+
             Vector3 delta = pointerWorld - lastPointerWorld;
             pointerVelocity = delta / Mathf.Max(Time.deltaTime, 0.001f);
             lastPointerWorld = pointerWorld;
 
-            // 1) THEO VỊ TRÍ: đẩy tâm block sao cho điểm nắm (sau khi xoay hiện tại) trùng đúng tay
-            Vector2 grabWorld = (Vector2)transform.TransformPoint(grabOffset); // điểm nắm hiện tại (world)
-            Vector2 posCorrection = (Vector2)pointerWorld - grabWorld;          // cần bù để đặt đúng dưới tay
+            Vector2 grabWorld = (Vector2)transform.TransformPoint(grabOffset); 
+            Vector2 posCorrection = (Vector2)pointerWorld - grabWorld;          
             float posGain = Mathf.Clamp01(Time.deltaTime * followSpeed);
             rb.MovePosition(rb.position + posCorrection * posGain);
 
-            // 2) THEO XOAY: để vector (tâm→điểm nắm) // song song // (tâm→tay)
-            Vector2 vecGrab = grabWorld - rb.position;              // hướng điểm nắm hiện tại
-            Vector2 vecPointer = (Vector2)pointerWorld - rb.position;  // hướng tay hiện tại
+            Vector2 vecGrab = grabWorld - rb.position;              
+            Vector2 vecPointer = (Vector2)pointerWorld - rb.position;  
             float currentAngle = Mathf.Atan2(vecGrab.y, vecGrab.x) * Mathf.Rad2Deg;
             float targetAngle = Mathf.Atan2(vecPointer.y, vecPointer.x) * Mathf.Rad2Deg;
             float angleDiff = Mathf.DeltaAngle(currentAngle, targetAngle);
 
-            // PD controller để xoay mượt, không dao động
-            float springStrength = 0.35f;  // lực kéo về góc mong muốn
-            float dampingFactor = 0.06f;  // giảm chấn theo vận tốc góc
+            float springStrength = 0.23f; 
+            float dampingFactor = 0.32f;  
             float torque = (angleDiff * springStrength) - (rb.angularVelocity * dampingFactor);
-            torque = Mathf.Clamp(torque, -10f, 10f); // giới hạn an toàn
+            torque = Mathf.Clamp(torque, -2.2f, 2.2f);
             rb.AddTorque(torque, ForceMode2D.Force);
         }
 
@@ -146,6 +143,7 @@ public class Block : MonoBehaviour
         if (isDragging && pointerUp)
         {
             isDragging = false;
+
             rb.linearDamping = linearDefault;
             rb.angularDamping = angularDefault;
 
@@ -162,6 +160,40 @@ public class Block : MonoBehaviour
             {
                 lastThrowForce = Vector2.zero;
             }
+        }
+    }
+
+
+    private void HandleWaterDrift()
+    {
+        if (isDragging) return;
+
+        driftTimer += Time.deltaTime;
+        if (driftTimer >= driftInterval)
+        {
+            driftTimer = 0f;
+
+            rb.AddForce(UnityEngine.Random.insideUnitCircle * driftForce, ForceMode2D.Force);
+            rb.AddTorque(UnityEngine.Random.Range(-driftTorque, driftTorque), ForceMode2D.Force);
+        }
+    }
+
+
+    private void CheckAutoDestroy()
+    {
+        Vector3 vp = cam.WorldToViewportPoint(transform.position);
+        if (vp.x < -0.11f || vp.x > 1.11f || vp.y < -0.11f || vp.y > 1.11f)
+        {
+            Destroy(transform.parent.gameObject);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (mySlot != null)
+        {
+            mySlot.occupied = false;
+            OnLilyDestroyed?.Invoke(mySlot);
         }
     }
 

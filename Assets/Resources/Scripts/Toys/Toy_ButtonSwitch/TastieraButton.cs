@@ -18,6 +18,7 @@ public class TastieraButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
     }
     public void OnPointerDown(PointerEventData eventData)
     {
+        Debug.Log("Pointer DOWN on: " + gameObject.name);
         if (isPressed) return;
         isPressed = true;
         

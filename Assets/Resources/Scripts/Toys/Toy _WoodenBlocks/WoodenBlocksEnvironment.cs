@@ -6,7 +6,7 @@ public class WoodenBlocksEnvironment : MonoBehaviour, IEnvironmentStart
     public GameObject[] blocks;
     public IEnumerator OnEnvironmentReady()
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.2f);
         foreach (var block in blocks)
         {
             Rigidbody2D rb = block.GetComponentInChildren<Rigidbody2D>();
