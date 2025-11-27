@@ -1,25 +1,24 @@
 ﻿using System;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class LilyPad : MonoBehaviour
 {
-
     private Rigidbody2D rb;
     private Camera cam;
 
-   
     // Drag state
     private bool isDragging = false;
     private Vector3 lastPointerWorld;
     private Vector3 pointerVelocity;
     private Vector2 grabOffset;
+    private Vector2 dragTargetPos;
 
     // Debug
     private Vector2 lastThrowForce;
     private bool showDebugLine = true;
 
     public LayerMask lilyMask;
+
     [Header("Follow Settings")]
     public float followSpeed = 25f;
 
@@ -32,7 +31,6 @@ public class LilyPad : MonoBehaviour
     [Header("Damping")]
     public float linearWhileDrag = 2f;
     public float angularWhileDrag = 0.8f;
-
     public float linearDefault = 0.6f;
     public float angularDefault = 0.3f;
 
@@ -42,7 +40,6 @@ public class LilyPad : MonoBehaviour
     public float driftTorque = 0.1f;
 
     private float driftTimer = 0f;
-
 
     public static Action<LilySlot> OnLilyDestroyed;
     [HideInInspector] public LilySlot mySlot;
@@ -54,6 +51,7 @@ public class LilyPad : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         cam = Camera.main;
+
         rb.linearDamping = linearDefault;
         rb.angularDamping = angularDefault;
     }
@@ -65,81 +63,94 @@ public class LilyPad : MonoBehaviour
         CheckAutoDestroy();
     }
 
+    private void FixedUpdate()
+    {
+        if (isDragging)
+        {
+            // Follow movement
+            Vector2 grabWorld = transform.TransformPoint(grabOffset);
+            Vector2 posCorrection = dragTargetPos - grabWorld;
+
+            float posGain = Mathf.Clamp01(Time.fixedDeltaTime * followSpeed);
+            rb.MovePosition(rb.position + posCorrection * posGain);
+
+            // Rotation spring
+            Vector2 vecGrab = grabWorld - rb.position;
+            Vector2 vecPointer = dragTargetPos - rb.position;
+
+            float currentAngle = Mathf.Atan2(vecGrab.y, vecGrab.x) * Mathf.Rad2Deg;
+            float targetAngle = Mathf.Atan2(vecPointer.y, vecPointer.x) * Mathf.Rad2Deg;
+            float angleDiff = Mathf.DeltaAngle(currentAngle, targetAngle);
+
+            float springStrength = 0.23f;
+            float dampingFactor = 0.32f;
+
+            float torque = (angleDiff * springStrength) - (rb.angularVelocity * dampingFactor);
+            torque = Mathf.Clamp(torque, -2.2f, 2.2f);
+
+            rb.AddTorque(torque, ForceMode2D.Force);
+
+            // Reset uncontrolled forces
+            rb.linearVelocity = Vector2.zero;
+        }
+    }
+
+
     private void HandlePointerInput()
     {
         bool pointerDown = false;
         bool pointerHeld = false;
         bool pointerUp = false;
+
         Vector3 pointerWorld = Vector3.zero;
+
 #if UNITY_EDITOR || UNITY_STANDALONE
-        // --- Mouse input ---
         pointerDown = Input.GetMouseButtonDown(0);
         pointerHeld = Input.GetMouseButton(0);
         pointerUp = Input.GetMouseButtonUp(0);
         pointerWorld = cam.ScreenToWorldPoint(Input.mousePosition);
         pointerWorld.z = 0;
 #else
-        // --- Touch input ---
         if (Input.touchCount > 0)
         {
             Touch touch = Input.GetTouch(0);
             pointerWorld = cam.ScreenToWorldPoint(touch.position);
             pointerWorld.z = 0;
 
-            if (touch.phase == TouchPhase.Began)
-                pointerDown = true;
-            else if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary)
-                pointerHeld = true;
-            else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
-                pointerUp = true;
+            pointerDown = touch.phase == TouchPhase.Began;
+            pointerHeld = touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary;
+            pointerUp = touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled;
         }
 #endif
 
-        // --- Khi bắt đầu chạm hoặc nhấn ---
+        // BEGIN DRAG
         if (pointerDown)
         {
-            Collider2D hit = Physics2D.OverlapPoint(pointerWorld,lilyMask);
+            Collider2D hit = Physics2D.OverlapPoint(pointerWorld, lilyMask);
             if (hit && hit.attachedRigidbody == rb)
             {
                 isDragging = true;
-                OnPointerDownEvent.Invoke(pointerWorld);
-                // ❗ LƯU OFFSET THEO LOCAL SPACE (điểm chạm trong toạ độ của block)
+                OnPointerDownEvent?.Invoke(pointerWorld);
                 grabOffset = transform.InverseTransformPoint(pointerWorld);
                 lastPointerWorld = pointerWorld;
+
                 rb.linearDamping = linearWhileDrag;
                 rb.angularDamping = angularWhileDrag;
             }
         }
 
-        // --- Khi giữ ---
         if (isDragging && pointerHeld)
         {
-            float speed = pointerVelocity.magnitude;
-            OnPointerMoveEvent?.Invoke(pointerWorld, speed);
-
             Vector3 delta = pointerWorld - lastPointerWorld;
             pointerVelocity = delta / Mathf.Max(Time.deltaTime, 0.001f);
             lastPointerWorld = pointerWorld;
 
-            Vector2 grabWorld = (Vector2)transform.TransformPoint(grabOffset); 
-            Vector2 posCorrection = (Vector2)pointerWorld - grabWorld;          
-            float posGain = Mathf.Clamp01(Time.deltaTime * followSpeed);
-            rb.MovePosition(rb.position + posCorrection * posGain);
+            float speed = pointerVelocity.magnitude;
 
-            Vector2 vecGrab = grabWorld - rb.position;              
-            Vector2 vecPointer = (Vector2)pointerWorld - rb.position;  
-            float currentAngle = Mathf.Atan2(vecGrab.y, vecGrab.x) * Mathf.Rad2Deg;
-            float targetAngle = Mathf.Atan2(vecPointer.y, vecPointer.x) * Mathf.Rad2Deg;
-            float angleDiff = Mathf.DeltaAngle(currentAngle, targetAngle);
-
-            float springStrength = 0.23f; 
-            float dampingFactor = 0.32f;  
-            float torque = (angleDiff * springStrength) - (rb.angularVelocity * dampingFactor);
-            torque = Mathf.Clamp(torque, -2.2f, 2.2f);
-            rb.AddTorque(torque, ForceMode2D.Force);
+            OnPointerMoveEvent?.Invoke(pointerWorld, speed);   // ⭐ GỌI LẠI Ở ĐÂY
+            dragTargetPos = pointerWorld;
         }
 
-        // --- Khi thả ---
         if (isDragging && pointerUp)
         {
             isDragging = false;
@@ -147,7 +158,6 @@ public class LilyPad : MonoBehaviour
             rb.linearDamping = linearDefault;
             rb.angularDamping = angularDefault;
 
-            // Xác định có ném hay chỉ thả
             float handSpeed = pointerVelocity.magnitude;
             if (handSpeed > throwThreshold)
             {
@@ -177,7 +187,7 @@ public class LilyPad : MonoBehaviour
             rb.AddTorque(UnityEngine.Random.Range(-driftTorque, driftTorque), ForceMode2D.Force);
         }
     }
-
+   
 
     private void CheckAutoDestroy()
     {
@@ -187,7 +197,6 @@ public class LilyPad : MonoBehaviour
             Destroy(transform.parent.gameObject);
         }
     }
-
     private void OnDestroy()
     {
         if (mySlot != null)
@@ -196,7 +205,6 @@ public class LilyPad : MonoBehaviour
             OnLilyDestroyed?.Invoke(mySlot);
         }
     }
-
     private void OnDrawGizmos()
     {
         if (!showDebugLine || lastThrowForce == Vector2.zero)

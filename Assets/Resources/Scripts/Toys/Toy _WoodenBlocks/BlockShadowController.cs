@@ -34,7 +34,6 @@ public class BlockDropShadow : MonoBehaviour
         {
             float xB = -Mathf.Sin(rad) * radiusSSX;
             float yB = -Mathf.Cos(rad) * radiusSSY;
-
             dropShadowSecondary.localPosition = new Vector3(xB, yB, 0);
             dropShadowSecondary.localRotation = Quaternion.identity;
 

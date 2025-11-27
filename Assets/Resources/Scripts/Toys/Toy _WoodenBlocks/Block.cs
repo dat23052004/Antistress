@@ -16,14 +16,14 @@ public class Block : MonoBehaviour
     private Vector3 lastPointerWorld;
     private Vector3 pointerVelocity;
     private Vector2 grabOffset;
-
+    private Vector2 dragTargetPos;
     // --- Debug ---
     private Vector2 lastThrowForce;
     private bool showDebugLine = true;
 
     [Header("Follow Settings")]
     [Tooltip("How fast block follows pointer.")]
-    public float followSpeed = 25f;
+    public float followSpeed = 150f;
 
     [Header("Throw Settings")]
     [Tooltip("Force multiplier when throwing.")]
@@ -39,14 +39,16 @@ public class Block : MonoBehaviour
 
     [Header("Damping")]
     [Tooltip("Damping while dragging.")]
-    public float linearWhileDrag = 5f;
+    public float linearWhileDrag = 2.5f;
     public float angularWhileDrag = 2f;
     [Tooltip("Damping when released.")]
     public float linearDefault = 0.2f;
     public float angularDefault = 0.05f;
 
-
-    //public ShadowController shadowController;
+    public float springStrength = 0.42f;
+    public float dampingFactor = 0.055f;
+    public float maxTorque = 100f;
+    public float gravityStrength = 3f;
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -57,13 +59,57 @@ public class Block : MonoBehaviour
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
-        //if (shadowController)
-        //    shadowController.target = transform;
     }
 
     private void Update()
     {
         HandlePointerInput();
+    }
+    private void FixedUpdate()
+    {
+        if (!isDragging) return;
+
+        // --- 1) FOLLOW POSITION (spring-damper) ---
+        Vector2 grabWorld = transform.TransformPoint(grabOffset);
+        Vector2 posCorrection = dragTargetPos - grabWorld;
+
+        float posGain = Mathf.Clamp01(Time.fixedDeltaTime * followSpeed);
+        rb.MovePosition(rb.position + posCorrection * posGain);
+
+
+        // --- ROTATE AROUND GRAB POINT (true behavior) ---
+        Vector2 vecGrab = grabWorld - rb.position;        // vector từ tâm → điểm chạm
+        Vector2 vecPointer = dragTargetPos - rb.position;    // vector từ tâm → tay
+
+        // góc hiện tại của điểm chạm
+        float currentAngle = Mathf.Atan2(vecGrab.y, vecGrab.x);
+        // góc mới theo tay
+        float targetAngle = Mathf.Atan2(vecPointer.y, vecPointer.x);
+
+        // chênh lệch góc
+        float angleDiff = Mathf.DeltaAngle(currentAngle * Mathf.Rad2Deg, targetAngle * Mathf.Rad2Deg);
+
+        // PD xoay chuẩn
+        float torquePD = angleDiff * springStrength - rb.angularVelocity * dampingFactor;
+
+        Vector2 grabDir = vecGrab.normalized;
+        float gSign = Vector3.Cross(grabDir, Vector2.down).z;
+        float gravityTorque = gSign * gravityStrength;
+
+        // --- STATE SPLIT ---
+        float pointerSpeed = pointerVelocity.magnitude;
+        float torque;
+
+        if (pointerSpeed > 0.15f)   
+        {
+            torque = torquePD;      
+        }
+        else                        
+        {
+            torque = -gravityTorque; 
+        }
+        rb.AddTorque(Mathf.Clamp(torque, -maxTorque, maxTorque),
+                      ForceMode2D.Force);
     }
 
     private void HandlePointerInput()
@@ -121,25 +167,8 @@ public class Block : MonoBehaviour
             pointerVelocity = delta / Mathf.Max(Time.deltaTime, 0.001f);
             lastPointerWorld = pointerWorld;
 
-            // 1) THEO VỊ TRÍ: đẩy tâm block sao cho điểm nắm (sau khi xoay hiện tại) trùng đúng tay
-            Vector2 grabWorld = (Vector2)transform.TransformPoint(grabOffset); // điểm nắm hiện tại (world)
-            Vector2 posCorrection = (Vector2)pointerWorld - grabWorld;          // cần bù để đặt đúng dưới tay
-            float posGain = Mathf.Clamp01(Time.deltaTime * followSpeed);
-            rb.MovePosition(rb.position + posCorrection * posGain);
+            dragTargetPos = pointerWorld;
 
-            // 2) THEO XOAY: để vector (tâm→điểm nắm) // song song // (tâm→tay)
-            Vector2 vecGrab = grabWorld - rb.position;              // hướng điểm nắm hiện tại
-            Vector2 vecPointer = (Vector2)pointerWorld - rb.position;  // hướng tay hiện tại
-            float currentAngle = Mathf.Atan2(vecGrab.y, vecGrab.x) * Mathf.Rad2Deg;
-            float targetAngle = Mathf.Atan2(vecPointer.y, vecPointer.x) * Mathf.Rad2Deg;
-            float angleDiff = Mathf.DeltaAngle(currentAngle, targetAngle);
-
-            // PD controller để xoay mượt, không dao động
-            float springStrength = 0.35f;  // lực kéo về góc mong muốn
-            float dampingFactor = 0.06f;  // giảm chấn theo vận tốc góc
-            float torque = (angleDiff * springStrength) - (rb.angularVelocity * dampingFactor);
-            torque = Mathf.Clamp(torque, -10f, 10f); // giới hạn an toàn
-            rb.AddTorque(torque, ForceMode2D.Force);
         }
 
         // --- Khi thả ---
