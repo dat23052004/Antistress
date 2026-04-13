@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_GUID: c594b4feb3b6bea43ad20a8287df283f
   m_SerializeEntries:
+  - m_GUID: 1ed7cb584b4057d4b9b1cdecbcdd0608
+    m_Address: Toy_Pallina
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 882bde6d879c6e74bbb1511feb4a1b80
     m_Address: Toy_LilyToss
     m_ReadOnly: 0
