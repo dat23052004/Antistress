@@ -1,4 +1,3 @@
-﻿ using Unity.VisualScripting;
 using UnityEngine;
 
 public class Pallian : MonoBehaviour
@@ -25,7 +24,6 @@ public class Pallian : MonoBehaviour
     public float linearDefault = 0f;
     public float angularDefault = 0f;
 
-
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -40,6 +38,7 @@ public class Pallian : MonoBehaviour
     {
         HandlePointerInput();
     }
+
     private void FixedUpdate()
     {
         if (isDragging)
@@ -47,39 +46,42 @@ public class Pallian : MonoBehaviour
             Vector2 posCorrection = dragTargetPos - rb.position;
             float posGain = Mathf.Clamp01(Time.fixedDeltaTime * followSpeed);
             rb.MovePosition(rb.position + posCorrection * posGain);
+            return;
         }
+
+        ApplyTiltForce();
     }
 
     public void HandlePointerInput()
     {
+        if (cam == null)
+            cam = Camera.main;
+
         bool pointerDown = false;
         bool pointerUp = false;
         bool pointerHeld = false;
         Vector3 pointerWorld = Vector3.zero;
 
-#if UNITY_EDITOR || UNITY_STANDALONE
-        pointerDown = Input.GetMouseButtonDown(0);
-        pointerHeld = Input.GetMouseButton(0);
-        pointerUp = Input.GetMouseButtonUp(0);
-        pointerWorld = cam.ScreenToWorldPoint(Input.mousePosition);
-        pointerWorld.z = 0;
-
-#else // MOBILE
-        // --- Touch input ---
-        if (Input.touchCount > 0)
+        if (InputManager.Ins.TryGetPrimaryPointerDownThisFrame(out Vector2 pointerScreenPos))
         {
-            Touch touch = Input.GetTouch(0);
-            pointerWorld = cam.ScreenToWorldPoint(touch.position);
-            pointerWorld.z = 0;
-
-            if (touch.phase == TouchPhase.Began)
-                pointerDown = true;
-            else if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary)
-                pointerHeld = true;
-            else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
-                pointerUp = true;
+            pointerDown = true;
+            pointerWorld = cam.ScreenToWorldPoint(pointerScreenPos);
+            pointerWorld.z = 0f;
         }
-#endif
+
+        if (InputManager.Ins.TryGetPrimaryPointerHeld(out pointerScreenPos))
+        {
+            pointerHeld = true;
+            pointerWorld = cam.ScreenToWorldPoint(pointerScreenPos);
+            pointerWorld.z = 0f;
+        }
+
+        if (InputManager.Ins.TryGetPrimaryPointerUpThisFrame(out pointerScreenPos))
+        {
+            pointerUp = true;
+            pointerWorld = cam.ScreenToWorldPoint(pointerScreenPos);
+            pointerWorld.z = 0f;
+        }
 
         if (pointerDown)
         {
@@ -87,19 +89,17 @@ public class Pallian : MonoBehaviour
             if (hit && hit.attachedRigidbody == rb)
             {
                 isDragging = true;
-
                 lastPointerWorld = pointerWorld;
                 rb.linearDamping = linearWhileDrag;
                 rb.angularDamping = angularWhileDrag;
             }
         }
+
         if (pointerHeld && isDragging)
         {
             Vector3 delta = pointerWorld - lastPointerWorld;
             pointerVelocity = delta / Mathf.Max(Time.deltaTime, 0.001f);
             lastPointerWorld = pointerWorld;
-
-            // LƯU target position để FixedUpdate xử lý
             dragTargetPos = pointerWorld;
 
             rb.linearVelocity = Vector2.zero;
@@ -124,9 +124,22 @@ public class Pallian : MonoBehaviour
             {
                 lastThrowForce = Vector2.zero;
             }
-
         }
     }
+
+    private void ApplyTiltForce()
+    {
+        if (rb == null || rb.bodyType != RigidbodyType2D.Dynamic)
+            return;
+
+        Vector2 tiltGravity = TiltController.CurrentGravity;
+        if (tiltGravity == Vector2.zero)
+            return;
+
+        Vector2 tiltForce = tiltGravity * rb.mass * rb.gravityScale;
+        rb.AddForce(tiltForce, ForceMode2D.Force);
+    }
+
     private void OnDrawGizmos()
     {
         if (!showDebugLine || lastThrowForce == Vector2.zero)
@@ -134,7 +147,7 @@ public class Pallian : MonoBehaviour
 
         Gizmos.color = Color.red;
         Vector3 start = transform.position;
-        Vector3 end = start + (Vector3)lastThrowForce.normalized * Mathf.Log10(lastThrowForce.magnitude + 1) * 2f;
+        Vector3 end = start + (Vector3)lastThrowForce.normalized * Mathf.Log10(lastThrowForce.magnitude + 1f) * 2f;
         Gizmos.DrawLine(start, end);
         Gizmos.DrawSphere(end, 0.05f);
     }

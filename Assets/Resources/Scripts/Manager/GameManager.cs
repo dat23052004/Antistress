@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public enum GameState { Menu, InGame, InToy, Settings, Paused }
@@ -33,20 +31,22 @@ public class GameManager : Singleton<GameManager>
                 break;
         }
     }
+
     public void StartGame(int gameIndex)
     {
         EnvironmentManager.Ins.SwitchToGame(gameIndex);
         SwitchState(GameState.InGame);
     }
-    public void StartToy(int toyIndex)
+
+    public void StartToy(int toyId)
     {
-        EnvironmentManager.Ins.SwitchToToy(toyIndex);
-        SwitchState(GameState.InGame);
+        EnvironmentManager.Ins.SwitchToToy(toyId);
+        SwitchState(GameState.InToy);
     }
+
     public void BackToMenu()
     {
         EnvironmentManager.Ins.SwitchToMenu();
         SwitchState(GameState.Menu);
     }
-
 }

@@ -1,8 +1,11 @@
-﻿using System.Collections;
-using UnityEditor;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class Intro : MonoBehaviour
 {
@@ -14,40 +17,37 @@ public class Intro : MonoBehaviour
 
     [Header("Audio")]
     [SerializeField] private AudioSource introAudioSource;
-    [SerializeField] private AudioClip startSound;     // âm khi fade in
+    [SerializeField] private AudioClip startSound;
     [SerializeField] private AudioClip clickSound;
 
-    private bool canSkip = false;
-    private bool isSkipping = false;
+    private bool canSkip;
+    private bool isSkipping;
 
     private IEnumerator Start()
     {
-       if(logoCanvas == null)
+        if (logoCanvas == null)
         {
             Debug.LogError("Logo CanvasGroup is not assigned in the Inspector.");
             yield break;
         }
 
 #if UNITY_EDITOR
-        UnityEditor.Selection.activeObject = null;
+        Selection.activeObject = null;
 #endif
-        if(startSound != null && introAudioSource != null)
-        {
+        if (startSound != null && introAudioSource != null)
             introAudioSource.PlayOneShot(startSound);
-        }
-        canSkip = true; 
+
+        canSkip = true;
 
         float timer = 0f;
-        while(timer < displayDuration && !isSkipping)
+        while (timer < displayDuration && !isSkipping)
         {
             timer += Time.deltaTime;
             yield return null;
         }
 
         yield return StartCoroutine(FadeLogo(0f, fadeOutDuration));
-
         yield return StartCoroutine(LoadMainSceneAsync());
-
     }
 
     private IEnumerator FadeLogo(float targetAlpha, float duration)
@@ -56,7 +56,7 @@ public class Intro : MonoBehaviour
         float timer = 0f;
 
         while (timer < duration)
-        {   
+        {
             timer += Time.deltaTime;
             logoCanvas.alpha = Mathf.Lerp(startAlpha, targetAlpha, timer / duration);
             yield return null;
@@ -65,10 +65,9 @@ public class Intro : MonoBehaviour
         logoCanvas.alpha = targetAlpha;
     }
 
-
     private void Update()
     {
-        if (canSkip && !isSkipping && Input.anyKeyDown)
+        if (canSkip && !isSkipping && InputManager.Ins.AnyInputStartedThisFrame())
         {
             isSkipping = true;
 
@@ -78,6 +77,7 @@ public class Intro : MonoBehaviour
             StartCoroutine(SkipToMain());
         }
     }
+
     private IEnumerator SkipToMain()
     {
         yield return StartCoroutine(FadeLogo(0f, 0.5f));
@@ -86,7 +86,6 @@ public class Intro : MonoBehaviour
 
     private IEnumerator LoadMainSceneAsync()
     {
-
         TransitionManager.Ins?.StartLoading();
         yield return null;
 
@@ -94,7 +93,7 @@ public class Intro : MonoBehaviour
         async.allowSceneActivation = false;
 
         float timer = 0f;
-        float minDisplayTime = 1f; // thời gian hiển thị tối thiểu (dù load nhanh)
+        float minDisplayTime = 1f;
 
         while (async.progress < 0.9f)
         {
@@ -104,7 +103,6 @@ public class Intro : MonoBehaviour
             yield return null;
         }
 
-        // Nếu load quá nhanh thì vẫn cho chạy giả đến 100%
         while (timer < minDisplayTime)
         {
             timer += Time.deltaTime;
@@ -119,5 +117,4 @@ public class Intro : MonoBehaviour
         yield return null;
         async.allowSceneActivation = true;
     }
-
 }

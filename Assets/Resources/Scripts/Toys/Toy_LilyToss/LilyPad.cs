@@ -104,24 +104,29 @@ public class LilyPad : MonoBehaviour
 
         Vector3 pointerWorld = Vector3.zero;
 
-#if UNITY_EDITOR || UNITY_STANDALONE
-        pointerDown = Input.GetMouseButtonDown(0);
-        pointerHeld = Input.GetMouseButton(0);
-        pointerUp = Input.GetMouseButtonUp(0);
-        pointerWorld = cam.ScreenToWorldPoint(Input.mousePosition);
-        pointerWorld.z = 0;
-#else
-        if (Input.touchCount > 0)
-        {
-            Touch touch = Input.GetTouch(0);
-            pointerWorld = cam.ScreenToWorldPoint(touch.position);
-            pointerWorld.z = 0;
+        if (cam == null)
+            cam = Camera.main;
 
-            pointerDown = touch.phase == TouchPhase.Began;
-            pointerHeld = touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary;
-            pointerUp = touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled;
+        if (InputManager.Ins.TryGetPrimaryPointerDownThisFrame(out Vector2 pointerScreenPos))
+        {
+            pointerDown = true;
+            pointerWorld = cam.ScreenToWorldPoint(pointerScreenPos);
+            pointerWorld.z = 0f;
         }
-#endif
+
+        if (InputManager.Ins.TryGetPrimaryPointerHeld(out pointerScreenPos))
+        {
+            pointerHeld = true;
+            pointerWorld = cam.ScreenToWorldPoint(pointerScreenPos);
+            pointerWorld.z = 0f;
+        }
+
+        if (InputManager.Ins.TryGetPrimaryPointerUpThisFrame(out pointerScreenPos))
+        {
+            pointerUp = true;
+            pointerWorld = cam.ScreenToWorldPoint(pointerScreenPos);
+            pointerWorld.z = 0f;
+        }
 
         // BEGIN DRAG
         if (pointerDown)

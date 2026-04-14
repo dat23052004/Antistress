@@ -1,6 +1,4 @@
-﻿using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class RevealController : MonoBehaviour
 {
@@ -9,11 +7,10 @@ public class RevealController : MonoBehaviour
     [SerializeField] private SpriteRenderer overlayRenderer;
     [SerializeField] private Material revealMaterial;
 
-
     [Header("Reveal Settings")]
     [SerializeField] private int maskResolution = 1024;
     [SerializeField] private float brushSize = 50f;
-    [SerializeField] Color overlayColor = new Color(0.5f, 0.5f, 0.5f, 1f);
+    [SerializeField] private Color overlayColor = new Color(0.5f, 0.5f, 0.5f, 1f);
     [SerializeField] private bool useSoftBrush = true;
 
     private Texture2D maskTexture;
@@ -23,8 +20,6 @@ public class RevealController : MonoBehaviour
     private Material instanceMaterial;
 
     private int maskResolutionSquared;
-    private float pixelSize;
-
 
     private void Start()
     {
@@ -38,27 +33,17 @@ public class RevealController : MonoBehaviour
     private void Update()
     {
         HandleInput();
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            ResetReveal();
-        }
-    }
 
+        if (InputManager.Ins.ResetPressedThisFrame())
+            ResetReveal();
+    }
 
     private void InitializeMaskTexture()
     {
-        // Unity 6: Dùng Color32 cho performance tốt hơn
-        maskTexture = new Texture2D(
-            maskResolution,
-            maskResolution,
-            TextureFormat.R8,
-            false
-        );
-
+        maskTexture = new Texture2D(maskResolution, maskResolution, TextureFormat.R8, false);
         maskTexture.filterMode = FilterMode.Bilinear;
         maskTexture.wrapMode = TextureWrapMode.Clamp;
 
-        // Khởi tạo màu đen
         clearColors = new Color32[maskResolutionSquared];
         maskPixels = new Color32[maskResolutionSquared];
 
@@ -69,7 +54,7 @@ public class RevealController : MonoBehaviour
         }
 
         maskTexture.SetPixels32(clearColors);
-        maskTexture.Apply(false); // false = không tạo mipmaps
+        maskTexture.Apply(false);
     }
 
     private void SetupMaterial()
@@ -77,73 +62,40 @@ public class RevealController : MonoBehaviour
         instanceMaterial = new Material(revealMaterial);
         instanceMaterial.SetTexture("_MaskTex", maskTexture);
         instanceMaterial.SetColor("_Color", overlayColor);
-
         overlayRenderer.material = instanceMaterial;
     }
 
- 
     private void HandleInput()
     {
-        bool shouldReveal = false;
-        Vector2 inputPosition = Vector2.zero;
+        if (!InputManager.Ins.TryGetPrimaryPointerHeld(out Vector2 inputPosition))
+            return;
 
-        // Mouse input (Editor/Desktop)
-        if (Input.GetMouseButton(0))
-        {
-            shouldReveal = true;
-            inputPosition = Input.mousePosition;
-        }
-        // Touch input (Mobile)
-        else if (Input.touchCount > 0)
-        {
-            Touch touch = Input.GetTouch(0);
-            if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary)
-            {
-                shouldReveal = true;
-                inputPosition = touch.position;
-            }
-        }
-
-        if (shouldReveal)
-        {
-            Vector2 worldPos = mainCamera.ScreenToWorldPoint(inputPosition);
-            RevealAtPosition(worldPos);
-        }
+        Vector2 worldPos = mainCamera.ScreenToWorldPoint(inputPosition);
+        RevealAtPosition(worldPos);
     }
 
     private void RevealAtPosition(Vector2 worldPosition)
     {
-        // Chuyển world position sang local
         Vector2 localPos = overlayRenderer.transform.InverseTransformPoint(worldPosition);
 
-        // Sprite bounds
         Bounds spriteBounds = overlayRenderer.sprite.bounds;
         float spriteWidth = spriteBounds.size.x;
         float spriteHeight = spriteBounds.size.y;
 
-        // Tính UV (0-1)
         float uvX = (localPos.x + spriteBounds.extents.x) / spriteWidth;
         float uvY = (localPos.y + spriteBounds.extents.y) / spriteHeight;
 
-        // Kiểm tra bounds
-        if (uvX < 0 || uvX > 1 || uvY < 0 || uvY > 1)
+        if (uvX < 0f || uvX > 1f || uvY < 0f || uvY > 1f)
             return;
 
-        // Pixel coordinates
         int pixelX = Mathf.Clamp(Mathf.RoundToInt(uvX * maskResolution), 0, maskResolution - 1);
         int pixelY = Mathf.Clamp(Mathf.RoundToInt(uvY * maskResolution), 0, maskResolution - 1);
 
-        // Vẽ
         if (useSoftBrush)
-        {
             DrawSoftCircle(pixelX, pixelY, brushSize);
-        }
         else
-        {
             DrawHardCircle(pixelX, pixelY, brushSize);
-        }
 
-        // Apply - Unity 6 tối ưu hơn với SetPixels32
         maskTexture.SetPixels32(maskPixels);
         maskTexture.Apply(false);
     }
@@ -166,17 +118,12 @@ public class RevealController : MonoBehaviour
 
                 if (distance <= radius)
                 {
-                    // Soft edge
                     float falloff = 1f - Mathf.Clamp01((distance - radius + 5f) / 5f);
                     byte alpha = (byte)(falloff * 255f);
-
                     int index = y * maskResolution + x;
 
-                    // Chỉ vẽ nếu giá trị mới lớn hơn
                     if (alpha > maskPixels[index].r)
-                    {
                         maskPixels[index] = new Color32(alpha, alpha, alpha, 255);
-                    }
                 }
             }
         }
@@ -218,13 +165,9 @@ public class RevealController : MonoBehaviour
     private void OnDestroy()
     {
         if (maskTexture != null)
-        {
             Destroy(maskTexture);
-        }
 
         if (instanceMaterial != null)
-        {
             Destroy(instanceMaterial);
-        }
     }
 }

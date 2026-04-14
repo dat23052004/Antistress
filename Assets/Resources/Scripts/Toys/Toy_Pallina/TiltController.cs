@@ -1,30 +1,48 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class TiltController : MonoBehaviour
 {
+    public static Vector2 CurrentGravity { get; private set; }
+
     [Header("Gravity Settings")]
-    public float gravityScale = 9.81f;     
-    public float tiltMultiplier = 2f;     // tăng độ nhạy nghiêng
-    public bool smoothGravity = true;     // làm mượt chuyển động
+    public float gravityScale = 9.81f;
+    public float tiltMultiplier = 2f;
+    public bool smoothGravity = true;
     public float smoothSpeed = 6f;
+    public float deadZone = 0.05f;
 
-    private Vector2 targetGravity;
+    private Vector2 previousGravity;
+    private Vector2 smoothedGravity;
 
-    void Update()
+    private void OnEnable()
     {
-        Vector3 accel = Input.acceleration;   
+        previousGravity = Physics2D.gravity;
+        Physics2D.gravity = Vector2.zero;
+        CurrentGravity = Vector2.zero;
+        smoothedGravity = Vector2.zero;
+    }
 
-        // Chuyển từ 3D space → 2D gravity
-        Vector2 gravity2D = new Vector2(accel.x, accel.y) * gravityScale * tiltMultiplier;
+    private void OnDisable()
+    {
+        Physics2D.gravity = previousGravity;
+        CurrentGravity = Vector2.zero;
+        smoothedGravity = Vector2.zero;
+    }
+
+    private void Update()
+    {
+        Vector2 tilt = InputManager.Ins.GetTilt();
+        if (tilt.sqrMagnitude < deadZone * deadZone)
+            tilt = Vector2.zero;
+
+        Vector2 gravity2D = tilt * gravityScale * tiltMultiplier;
 
         if (smoothGravity)
-        {
-            targetGravity = Vector2.Lerp(targetGravity, gravity2D, Time.deltaTime * smoothSpeed);
-            Physics2D.gravity = targetGravity;
-        }
+            smoothedGravity = Vector2.Lerp(smoothedGravity, gravity2D, Time.deltaTime * smoothSpeed);
         else
-        {
-            Physics2D.gravity = gravity2D;
-        }
+            smoothedGravity = gravity2D;
+
+        CurrentGravity = smoothedGravity;
+        Physics2D.gravity = Vector2.zero;
     }
 }
