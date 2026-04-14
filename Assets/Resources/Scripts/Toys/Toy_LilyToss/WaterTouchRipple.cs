@@ -17,7 +17,7 @@ public class WaterTouchRipple : MonoBehaviour
 
     private void Update()
     {
-        if (InputManager.Ins.TryGetPrimaryPointerDownThisFrame(out Vector2 screenPos))
+        if (InputManager.TryGetPrimaryPointerDownThisFrame(out Vector2 screenPos))
             SpawnRippleAtScreenPos(screenPos);
     }
 

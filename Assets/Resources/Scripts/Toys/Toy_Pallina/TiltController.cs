@@ -31,7 +31,7 @@ public class TiltController : MonoBehaviour
 
     private void Update()
     {
-        Vector2 tilt = InputManager.Ins.GetTilt();
+        Vector2 tilt = InputManager.GetTilt();
         if (tilt.sqrMagnitude < deadZone * deadZone)
             tilt = Vector2.zero;
 

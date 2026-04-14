@@ -67,7 +67,7 @@ public class Intro : MonoBehaviour
 
     private void Update()
     {
-        if (canSkip && !isSkipping && InputManager.Ins.AnyInputStartedThisFrame())
+        if (canSkip && !isSkipping && InputManager.AnyInputStartedThisFrame())
         {
             isSkipping = true;
 
@@ -117,4 +117,5 @@ public class Intro : MonoBehaviour
         yield return null;
         async.allowSceneActivation = true;
     }
+
 }

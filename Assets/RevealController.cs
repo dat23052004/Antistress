@@ -34,7 +34,7 @@ public class RevealController : MonoBehaviour
     {
         HandleInput();
 
-        if (InputManager.Ins.ResetPressedThisFrame())
+        if (InputManager.ResetPressedThisFrame())
             ResetReveal();
     }
 
@@ -67,7 +67,7 @@ public class RevealController : MonoBehaviour
 
     private void HandleInput()
     {
-        if (!InputManager.Ins.TryGetPrimaryPointerHeld(out Vector2 inputPosition))
+        if (!InputManager.TryGetPrimaryPointerHeld(out Vector2 inputPosition))
             return;
 
         Vector2 worldPos = mainCamera.ScreenToWorldPoint(inputPosition);
@@ -170,4 +170,5 @@ public class RevealController : MonoBehaviour
         if (instanceMaterial != null)
             Destroy(instanceMaterial);
     }
+
 }

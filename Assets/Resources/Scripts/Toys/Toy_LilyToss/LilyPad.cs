@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public class LilyPad : MonoBehaviour
@@ -6,14 +6,12 @@ public class LilyPad : MonoBehaviour
     private Rigidbody2D rb;
     private Camera cam;
 
-    // Drag state
-    private bool isDragging = false;
+    private bool isDragging;
     private Vector3 lastPointerWorld;
     private Vector3 pointerVelocity;
     private Vector2 grabOffset;
     private Vector2 dragTargetPos;
 
-    // Debug
     private Vector2 lastThrowForce;
     private bool showDebugLine = true;
 
@@ -39,7 +37,7 @@ public class LilyPad : MonoBehaviour
     public float driftForce = 0.15f;
     public float driftTorque = 0.1f;
 
-    private float driftTimer = 0f;
+    private float driftTimer;
 
     public static Action<LilySlot> OnLilyDestroyed;
     [HideInInspector] public LilySlot mySlot;
@@ -65,70 +63,62 @@ public class LilyPad : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (isDragging)
-        {
-            // Follow movement
-            Vector2 grabWorld = transform.TransformPoint(grabOffset);
-            Vector2 posCorrection = dragTargetPos - grabWorld;
+        if (!isDragging)
+            return;
 
-            float posGain = Mathf.Clamp01(Time.fixedDeltaTime * followSpeed);
-            rb.MovePosition(rb.position + posCorrection * posGain);
+        Vector2 grabWorld = transform.TransformPoint(grabOffset);
+        Vector2 posCorrection = dragTargetPos - grabWorld;
 
-            // Rotation spring
-            Vector2 vecGrab = grabWorld - rb.position;
-            Vector2 vecPointer = dragTargetPos - rb.position;
+        float posGain = Mathf.Clamp01(Time.fixedDeltaTime * followSpeed);
+        rb.MovePosition(rb.position + posCorrection * posGain);
 
-            float currentAngle = Mathf.Atan2(vecGrab.y, vecGrab.x) * Mathf.Rad2Deg;
-            float targetAngle = Mathf.Atan2(vecPointer.y, vecPointer.x) * Mathf.Rad2Deg;
-            float angleDiff = Mathf.DeltaAngle(currentAngle, targetAngle);
+        Vector2 vecGrab = grabWorld - rb.position;
+        Vector2 vecPointer = dragTargetPos - rb.position;
 
-            float springStrength = 0.23f;
-            float dampingFactor = 0.32f;
+        float currentAngle = Mathf.Atan2(vecGrab.y, vecGrab.x) * Mathf.Rad2Deg;
+        float targetAngle = Mathf.Atan2(vecPointer.y, vecPointer.x) * Mathf.Rad2Deg;
+        float angleDiff = Mathf.DeltaAngle(currentAngle, targetAngle);
 
-            float torque = (angleDiff * springStrength) - (rb.angularVelocity * dampingFactor);
-            torque = Mathf.Clamp(torque, -2.2f, 2.2f);
+        float springStrength = 0.23f;
+        float dampingFactor = 0.32f;
+        float torque = (angleDiff * springStrength) - (rb.angularVelocity * dampingFactor);
+        torque = Mathf.Clamp(torque, -2.2f, 2.2f);
 
-            rb.AddTorque(torque, ForceMode2D.Force);
-
-            // Reset uncontrolled forces
-            rb.linearVelocity = Vector2.zero;
-        }
+        rb.AddTorque(torque, ForceMode2D.Force);
+        rb.linearVelocity = Vector2.zero;
     }
-
 
     private void HandlePointerInput()
     {
         bool pointerDown = false;
         bool pointerHeld = false;
         bool pointerUp = false;
-
         Vector3 pointerWorld = Vector3.zero;
 
         if (cam == null)
             cam = Camera.main;
 
-        if (InputManager.Ins.TryGetPrimaryPointerDownThisFrame(out Vector2 pointerScreenPos))
+        if (InputManager.TryGetPrimaryPointerDownThisFrame(out Vector2 pointerScreenPos))
         {
             pointerDown = true;
             pointerWorld = cam.ScreenToWorldPoint(pointerScreenPos);
             pointerWorld.z = 0f;
         }
 
-        if (InputManager.Ins.TryGetPrimaryPointerHeld(out pointerScreenPos))
+        if (InputManager.TryGetPrimaryPointerHeld(out pointerScreenPos))
         {
             pointerHeld = true;
             pointerWorld = cam.ScreenToWorldPoint(pointerScreenPos);
             pointerWorld.z = 0f;
         }
 
-        if (InputManager.Ins.TryGetPrimaryPointerUpThisFrame(out pointerScreenPos))
+        if (InputManager.TryGetPrimaryPointerUpThisFrame(out pointerScreenPos))
         {
             pointerUp = true;
             pointerWorld = cam.ScreenToWorldPoint(pointerScreenPos);
             pointerWorld.z = 0f;
         }
 
-        // BEGIN DRAG
         if (pointerDown)
         {
             Collider2D hit = Physics2D.OverlapPoint(pointerWorld, lilyMask);
@@ -138,7 +128,6 @@ public class LilyPad : MonoBehaviour
                 OnPointerDownEvent?.Invoke(pointerWorld);
                 grabOffset = transform.InverseTransformPoint(pointerWorld);
                 lastPointerWorld = pointerWorld;
-
                 rb.linearDamping = linearWhileDrag;
                 rb.angularDamping = angularWhileDrag;
             }
@@ -151,15 +140,13 @@ public class LilyPad : MonoBehaviour
             lastPointerWorld = pointerWorld;
 
             float speed = pointerVelocity.magnitude;
-
-            OnPointerMoveEvent?.Invoke(pointerWorld, speed);   // ⭐ GỌI LẠI Ở ĐÂY
+            OnPointerMoveEvent?.Invoke(pointerWorld, speed);
             dragTargetPos = pointerWorld;
         }
 
         if (isDragging && pointerUp)
         {
             isDragging = false;
-
             rb.linearDamping = linearDefault;
             rb.angularDamping = angularDefault;
 
@@ -178,30 +165,27 @@ public class LilyPad : MonoBehaviour
         }
     }
 
-
     private void HandleWaterDrift()
     {
-        if (isDragging) return;
+        if (isDragging)
+            return;
 
         driftTimer += Time.deltaTime;
         if (driftTimer >= driftInterval)
         {
             driftTimer = 0f;
-
             rb.AddForce(UnityEngine.Random.insideUnitCircle * driftForce, ForceMode2D.Force);
             rb.AddTorque(UnityEngine.Random.Range(-driftTorque, driftTorque), ForceMode2D.Force);
         }
     }
-   
 
     private void CheckAutoDestroy()
     {
         Vector3 vp = cam.WorldToViewportPoint(transform.position);
         if (vp.x < -0.11f || vp.x > 1.11f || vp.y < -0.11f || vp.y > 1.11f)
-        {
             Destroy(transform.parent.gameObject);
-        }
     }
+
     private void OnDestroy()
     {
         if (mySlot != null)
@@ -210,6 +194,7 @@ public class LilyPad : MonoBehaviour
             OnLilyDestroyed?.Invoke(mySlot);
         }
     }
+
     private void OnDrawGizmos()
     {
         if (!showDebugLine || lastThrowForce == Vector2.zero)
@@ -217,7 +202,7 @@ public class LilyPad : MonoBehaviour
 
         Gizmos.color = Color.red;
         Vector3 start = transform.position;
-        Vector3 end = start + (Vector3)lastThrowForce.normalized * Mathf.Log10(lastThrowForce.magnitude + 1) * 2f;
+        Vector3 end = start + (Vector3)lastThrowForce.normalized * Mathf.Log10(lastThrowForce.magnitude + 1f) * 2f;
         Gizmos.DrawLine(start, end);
         Gizmos.DrawSphere(end, 0.05f);
     }

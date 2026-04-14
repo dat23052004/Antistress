@@ -62,21 +62,21 @@ public class Pallian : MonoBehaviour
         bool pointerHeld = false;
         Vector3 pointerWorld = Vector3.zero;
 
-        if (InputManager.Ins.TryGetPrimaryPointerDownThisFrame(out Vector2 pointerScreenPos))
+        if (InputManager.TryGetPrimaryPointerDownThisFrame(out Vector2 pointerScreenPos))
         {
             pointerDown = true;
             pointerWorld = cam.ScreenToWorldPoint(pointerScreenPos);
             pointerWorld.z = 0f;
         }
 
-        if (InputManager.Ins.TryGetPrimaryPointerHeld(out pointerScreenPos))
+        if (InputManager.TryGetPrimaryPointerHeld(out pointerScreenPos))
         {
             pointerHeld = true;
             pointerWorld = cam.ScreenToWorldPoint(pointerScreenPos);
             pointerWorld.z = 0f;
         }
 
-        if (InputManager.Ins.TryGetPrimaryPointerUpThisFrame(out pointerScreenPos))
+        if (InputManager.TryGetPrimaryPointerUpThisFrame(out pointerScreenPos))
         {
             pointerUp = true;
             pointerWorld = cam.ScreenToWorldPoint(pointerScreenPos);

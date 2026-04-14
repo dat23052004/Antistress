@@ -1,67 +1,57 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.UI;
-using UnityEngine.SceneManagement;
 
-public class InputManager : Singleton<InputManager>
+public static class InputManager
 {
-    private bool accelerometerEnabledByManager;
+    private static bool initialized;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    private static void Bootstrap()
+    private static void InitializeOnLoad()
     {
-        _ = Ins;
+        EnsureInitialized();
     }
 
-    protected override void Initialize()
+    public static bool AnyInputStartedThisFrame()
     {
-        DontDestroyOnLoad(gameObject);
-        SceneManager.sceneLoaded += OnSceneLoaded;
+        EnsureInitialized();
 
-        ConfigureInputSystem();
-        ConfigureEventSystem();
-    }
-
-    private void OnDestroy()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-        DisableAccelerometerIfNeeded();
-    }
-
-    public bool AnyInputStartedThisFrame()
-    {
         if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
             return true;
 
         return TryGetPrimaryPointerDownThisFrame(out _);
     }
 
-    public bool ResetPressedThisFrame()
+    public static bool ResetPressedThisFrame()
     {
+        EnsureInitialized();
         return Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame;
     }
 
-    public bool TryGetPrimaryPointerDownThisFrame(out Vector2 screenPosition)
+    public static bool TryGetPrimaryPointerDownThisFrame(out Vector2 screenPosition)
     {
+        EnsureInitialized();
         return TryGetTouchPointer(PointerQuery.Down, out screenPosition) ||
                TryGetMousePointer(PointerQuery.Down, out screenPosition);
     }
 
-    public bool TryGetPrimaryPointerHeld(out Vector2 screenPosition)
+    public static bool TryGetPrimaryPointerHeld(out Vector2 screenPosition)
     {
+        EnsureInitialized();
         return TryGetTouchPointer(PointerQuery.Held, out screenPosition) ||
                TryGetMousePointer(PointerQuery.Held, out screenPosition);
     }
 
-    public bool TryGetPrimaryPointerUpThisFrame(out Vector2 screenPosition)
+    public static bool TryGetPrimaryPointerUpThisFrame(out Vector2 screenPosition)
     {
+        EnsureInitialized();
         return TryGetTouchPointer(PointerQuery.Up, out screenPosition) ||
                TryGetMousePointer(PointerQuery.Up, out screenPosition);
     }
 
-    public Vector2 GetTilt()
+    public static Vector2 GetTilt()
     {
+        EnsureInitialized();
+
 #if UNITY_EDITOR || UNITY_STANDALONE
         return ReadEditorTilt();
 #else
@@ -75,54 +65,26 @@ public class InputManager : Singleton<InputManager>
 #endif
     }
 
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    private static void EnsureInitialized()
     {
-        ConfigureInputSystem();
-        ConfigureEventSystem();
-    }
+        if (initialized)
+            return;
 
-    private void ConfigureInputSystem()
-    {
+        initialized = true;
+
         if (InputSystem.settings != null)
             InputSystem.settings.compensateForScreenOrientation = true;
-
-        EnsureAccelerometerEnabled();
     }
 
-    private void EnsureAccelerometerEnabled()
+    private static void EnsureAccelerometerEnabled()
     {
         if (Accelerometer.current == null || Accelerometer.current.enabled)
             return;
 
         InputSystem.EnableDevice(Accelerometer.current);
-        accelerometerEnabledByManager = true;
     }
 
-    private void DisableAccelerometerIfNeeded()
-    {
-        if (!accelerometerEnabledByManager || Accelerometer.current == null)
-            return;
-
-        InputSystem.DisableDevice(Accelerometer.current);
-        accelerometerEnabledByManager = false;
-    }
-
-    private void ConfigureEventSystem()
-    {
-        EventSystem eventSystem = EventSystem.current ?? FindFirstObjectByType<EventSystem>();
-        if (eventSystem == null)
-            return;
-
-        InputSystemUIInputModule inputSystemModule = eventSystem.GetComponent<InputSystemUIInputModule>();
-        if (inputSystemModule == null)
-            inputSystemModule = eventSystem.gameObject.AddComponent<InputSystemUIInputModule>();
-
-        BaseInputModule[] modules = eventSystem.GetComponents<BaseInputModule>();
-        foreach (BaseInputModule module in modules)
-            module.enabled = module == inputSystemModule;
-    }
-
-    private bool TryGetTouchPointer(PointerQuery query, out Vector2 screenPosition)
+    private static bool TryGetTouchPointer(PointerQuery query, out Vector2 screenPosition)
     {
         if (Touchscreen.current != null)
         {
@@ -147,12 +109,11 @@ public class InputManager : Singleton<InputManager>
                 }
             }
         }
-
         screenPosition = Vector2.zero;
         return false;
     }
 
-    private bool TryGetMousePointer(PointerQuery query, out Vector2 screenPosition)
+    private static bool TryGetMousePointer(PointerQuery query, out Vector2 screenPosition)
     {
         if (Mouse.current != null)
         {
@@ -173,7 +134,7 @@ public class InputManager : Singleton<InputManager>
         return false;
     }
 
-    private Vector2 ReadEditorTilt()
+    private static Vector2 ReadEditorTilt()
     {
         if (Keyboard.current == null)
             return Vector2.zero;

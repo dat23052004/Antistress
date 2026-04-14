@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine;
 
 /// <summary>
 /// Professional Drag & Throw Controller for both Mouse and Touch.
@@ -11,13 +10,11 @@ public class Block : MonoBehaviour
     private Rigidbody2D rb;
     private Camera cam;
 
-    // --- Input state ---
     private bool isDragging;
     private Vector3 lastPointerWorld;
     private Vector3 pointerVelocity;
     private Vector2 grabOffset;
     private Vector2 dragTargetPos;
-    // --- Debug ---
     private Vector2 lastThrowForce;
     private bool showDebugLine = true;
 
@@ -35,7 +32,7 @@ public class Block : MonoBehaviour
 
     [Header("Platform Force Scaling")]
     [Tooltip("Scale down throw force when testing in Editor (mouse input).")]
-    public float editorForceScale = 0.3f; // reduce mouse sensitivity
+    public float editorForceScale = 0.3f;
 
     [Header("Damping")]
     [Tooltip("Damping while dragging.")]
@@ -49,6 +46,7 @@ public class Block : MonoBehaviour
     public float dampingFactor = 0.055f;
     public float maxTorque = 100f;
     public float gravityStrength = 3f;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -58,58 +56,41 @@ public class Block : MonoBehaviour
         rb.angularDamping = angularDefault;
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
-
     }
 
     private void Update()
     {
         HandlePointerInput();
     }
+
     private void FixedUpdate()
     {
-        if (!isDragging) return;
+        if (!isDragging)
+            return;
 
-        // --- 1) FOLLOW POSITION (spring-damper) ---
         Vector2 grabWorld = transform.TransformPoint(grabOffset);
         Vector2 posCorrection = dragTargetPos - grabWorld;
 
         float posGain = Mathf.Clamp01(Time.fixedDeltaTime * followSpeed);
         rb.MovePosition(rb.position + posCorrection * posGain);
 
+        Vector2 vecGrab = grabWorld - rb.position;
+        Vector2 vecPointer = dragTargetPos - rb.position;
 
-        // --- ROTATE AROUND GRAB POINT (true behavior) ---
-        Vector2 vecGrab = grabWorld - rb.position;        // vector từ tâm → điểm chạm
-        Vector2 vecPointer = dragTargetPos - rb.position;    // vector từ tâm → tay
-
-        // góc hiện tại của điểm chạm
         float currentAngle = Mathf.Atan2(vecGrab.y, vecGrab.x);
-        // góc mới theo tay
         float targetAngle = Mathf.Atan2(vecPointer.y, vecPointer.x);
-
-        // chênh lệch góc
         float angleDiff = Mathf.DeltaAngle(currentAngle * Mathf.Rad2Deg, targetAngle * Mathf.Rad2Deg);
 
-        // PD xoay chuẩn
         float torquePD = angleDiff * springStrength - rb.angularVelocity * dampingFactor;
 
         Vector2 grabDir = vecGrab.normalized;
         float gSign = Vector3.Cross(grabDir, Vector2.down).z;
         float gravityTorque = gSign * gravityStrength;
 
-        // --- STATE SPLIT ---
         float pointerSpeed = pointerVelocity.magnitude;
-        float torque;
+        float torque = pointerSpeed > 0.15f ? torquePD : -gravityTorque;
 
-        if (pointerSpeed > 0.15f)   
-        {
-            torque = torquePD;      
-        }
-        else                        
-        {
-            torque = -gravityTorque; 
-        }
-        rb.AddTorque(Mathf.Clamp(torque, -maxTorque, maxTorque),
-                      ForceMode2D.Force);
+        rb.AddTorque(Mathf.Clamp(torque, -maxTorque, maxTorque), ForceMode2D.Force);
     }
 
     private void HandlePointerInput()
@@ -122,63 +103,54 @@ public class Block : MonoBehaviour
         if (cam == null)
             cam = Camera.main;
 
-        if (InputManager.Ins.TryGetPrimaryPointerDownThisFrame(out Vector2 pointerScreenPos))
+        if (InputManager.TryGetPrimaryPointerDownThisFrame(out Vector2 pointerScreenPos))
         {
             pointerDown = true;
             pointerWorld = cam.ScreenToWorldPoint(pointerScreenPos);
             pointerWorld.z = 0f;
         }
 
-        if (InputManager.Ins.TryGetPrimaryPointerHeld(out pointerScreenPos))
+        if (InputManager.TryGetPrimaryPointerHeld(out pointerScreenPos))
         {
             pointerHeld = true;
             pointerWorld = cam.ScreenToWorldPoint(pointerScreenPos);
             pointerWorld.z = 0f;
         }
 
-        if (InputManager.Ins.TryGetPrimaryPointerUpThisFrame(out pointerScreenPos))
+        if (InputManager.TryGetPrimaryPointerUpThisFrame(out pointerScreenPos))
         {
             pointerUp = true;
             pointerWorld = cam.ScreenToWorldPoint(pointerScreenPos);
             pointerWorld.z = 0f;
         }
 
-        // --- Khi bắt đầu chạm hoặc nhấn ---
         if (pointerDown)
         {
             Collider2D hit = Physics2D.OverlapPoint(pointerWorld);
             if (hit && hit.attachedRigidbody == rb)
             {
                 isDragging = true;
-
-                // ❗ LƯU OFFSET THEO LOCAL SPACE (điểm chạm trong toạ độ của block)
                 grabOffset = transform.InverseTransformPoint(pointerWorld);
-
                 lastPointerWorld = pointerWorld;
                 rb.linearDamping = linearWhileDrag;
                 rb.angularDamping = angularWhileDrag;
             }
         }
 
-        // --- Khi giữ ---
         if (isDragging && pointerHeld)
         {
             Vector3 delta = pointerWorld - lastPointerWorld;
             pointerVelocity = delta / Mathf.Max(Time.deltaTime, 0.001f);
             lastPointerWorld = pointerWorld;
-
             dragTargetPos = pointerWorld;
-
         }
 
-        // --- Khi thả ---
         if (isDragging && pointerUp)
         {
             isDragging = false;
             rb.linearDamping = linearDefault;
             rb.angularDamping = angularDefault;
 
-            // Xác định có ném hay chỉ thả
             float handSpeed = pointerVelocity.magnitude;
             if (handSpeed > throwThreshold)
             {
@@ -201,7 +173,7 @@ public class Block : MonoBehaviour
 
         Gizmos.color = Color.red;
         Vector3 start = transform.position;
-        Vector3 end = start + (Vector3)lastThrowForce.normalized * Mathf.Log10(lastThrowForce.magnitude + 1) * 2f;
+        Vector3 end = start + (Vector3)lastThrowForce.normalized * Mathf.Log10(lastThrowForce.magnitude + 1f) * 2f;
         Gizmos.DrawLine(start, end);
         Gizmos.DrawSphere(end, 0.05f);
     }
