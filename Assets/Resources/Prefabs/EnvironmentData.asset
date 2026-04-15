@@ -14,50 +14,60 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   environments:
   - environmentId: 0
+    type: 0
     displayName: Menu
     icon: {fileID: 0}
     environmentKey: 
-    type: 0
     cameraPosition: {x: 0, y: 0, z: -10}
     cameraRotation: {x: 0, y: 0, z: 0}
     skybox: {fileID: 0}
     backgroundMusic: {fileID: 8300000, guid: ce5b0523b62745a46b17bcf7ec6237b7, type: 3}
     ambientColor: {r: 0, g: 0, b: 0, a: 0}
   - environmentId: 1
+    type: 2
     displayName: ButtonSwitch
     icon: {fileID: 21300000, guid: 42de1b6e8f9514a4d9878ddc4edafe01, type: 3}
     environmentKey: Toy_ButtonSwitch
-    type: 2
     cameraPosition: {x: 0, y: 0, z: -10}
     cameraRotation: {x: 0, y: 0, z: 0}
     skybox: {fileID: 0}
     backgroundMusic: {fileID: 8300000, guid: 58dda420687fb664bbb07406caa93b13, type: 3}
     ambientColor: {r: 0.8238993, g: 0.4430401, b: 0.4430401, a: 0}
   - environmentId: 0
+    type: 2
     displayName: Cubetti
     icon: {fileID: 21300000, guid: 5501d8be8628ffe44bbc9ab8395c6835, type: 3}
     environmentKey: Toy_WoodenBlocks
-    type: 2
     cameraPosition: {x: 0, y: 0, z: -10}
     cameraRotation: {x: 0, y: 0, z: 0}
     skybox: {fileID: 0}
     backgroundMusic: {fileID: 8300000, guid: 58dda420687fb664bbb07406caa93b13, type: 3}
     ambientColor: {r: 0.8238993, g: 0.4430401, b: 0.4430401, a: 0}
   - environmentId: 2
+    type: 2
     displayName: Ninfee
     icon: {fileID: 21300000, guid: c0b07475234b0f848b8051fcc3cecfee, type: 3}
     environmentKey: Toy_LilyToss
-    type: 2
     cameraPosition: {x: 0, y: 0, z: -10}
     cameraRotation: {x: 0, y: 0, z: 0}
     skybox: {fileID: 0}
     backgroundMusic: {fileID: 8300000, guid: 58dda420687fb664bbb07406caa93b13, type: 3}
     ambientColor: {r: 0.8238993, g: 0.4430401, b: 0.4430401, a: 0}
   - environmentId: 3
+    type: 2
     displayName: Palle
     icon: {fileID: 21300000, guid: 7be4ef0a8dda5d049a3c9e26ae9d284a, type: 3}
     environmentKey: Toy_Pallina
+    cameraPosition: {x: 0, y: 0, z: -10}
+    cameraRotation: {x: 0, y: 0, z: 0}
+    skybox: {fileID: 0}
+    backgroundMusic: {fileID: 8300000, guid: 58dda420687fb664bbb07406caa93b13, type: 3}
+    ambientColor: {r: 0.8238993, g: 0.4430401, b: 0.4430401, a: 0}
+  - environmentId: 4
     type: 2
+    displayName: RevealLeaves
+    icon: {fileID: 21300000, guid: b7bcd64d3d4854b419aff25d9122387b, type: 3}
+    environmentKey: Toy_RevealLeaves
     cameraPosition: {x: 0, y: 0, z: -10}
     cameraRotation: {x: 0, y: 0, z: 0}
     skybox: {fileID: 0}

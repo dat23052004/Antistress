@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 public static class InputManager
@@ -63,6 +64,22 @@ public static class InputManager
         Vector3 acceleration = Accelerometer.current.acceleration.ReadValue();
         return new Vector2(acceleration.x, acceleration.y);
 #endif
+    }
+
+    public static bool IsPrimaryPointerOverUI()
+    {
+        EventSystem eventSystem = EventSystem.current;
+        if (eventSystem == null)
+            return false;
+
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
+        {
+            int touchId = Touchscreen.current.primaryTouch.touchId.ReadValue();
+            if (eventSystem.IsPointerOverGameObject(touchId))
+                return true;
+        }
+
+        return eventSystem.IsPointerOverGameObject();
     }
 
     private static void EnsureInitialized()
