@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class RevealController : MonoBehaviour
+public sealed class RevealController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private SpriteRenderer backgroundRenderer;
@@ -28,7 +28,6 @@ public class RevealController : MonoBehaviour
     [SerializeField] private float rotationFromSwipe = 16f;
     [SerializeField] private float randomRotationJitter = 6f;
 
-    private readonly RevealGridBuilder gridBuilder = new RevealGridBuilder();
     private readonly RevealLeafField leafField = new RevealLeafField();
 
     private Camera mainCamera;
@@ -38,58 +37,38 @@ public class RevealController : MonoBehaviour
 
     private void Awake()
     {
-        ResolveReferences();
+        mainCamera = Camera.main;
         ResetReveal();
     }
 
     private void Update()
     {
-        if (mainCamera == null)
-            mainCamera = Camera.main;
-
-        RevealLeafField.MotionSettings motionSettings = CreateMotionSettings();
-        HandleInput(motionSettings);
-        leafField.UpdateAnimations(Time.deltaTime, motionSettings);
+        HandleInput();
+        leafField.UpdateAnimations(Time.deltaTime, revealDuration);
 
         if (InputManager.ResetPressedThisFrame())
             ResetReveal();
     }
 
-    private void ResolveReferences()
+    [ContextMenu("Reset Reveal")]
+    public void ResetReveal()
     {
-        if (backgroundRenderer == null)
+        ResetSwipeState();
+
+        if (!ValidateSetup())
         {
-            backgroundRenderer = GetComponent<SpriteRenderer>();
-            if (backgroundRenderer == null)
-                backgroundRenderer = GetComponentInChildren<SpriteRenderer>();
+            leafField.Clear();
+            return;
         }
 
-        leafRoot = gridBuilder.ResolveLeafRoot(transform, leafRoot);
+        RebuildGrid();
+        leafField.CacheLeaves(leafRoot, leafMask);
+        leafField.HideAllLeaves();
     }
 
-    private RevealGridBuilder.LayoutSettings CreateLayoutSettings()
+    private void HandleInput()
     {
-        return new RevealGridBuilder.LayoutSettings(
-            spawnSpacingX,
-            spawnSpacingY,
-            staggerOddRows,
-            rowOffsetX,
-            overscanX,
-            overscanY);
-    }
-
-    private RevealLeafField.MotionSettings CreateMotionSettings()
-    {
-        return new RevealLeafField.MotionSettings(
-            revealDuration,
-            entryOffset,
-            rotationFromSwipe,
-            randomRotationJitter);
-    }
-
-    private void HandleInput(RevealLeafField.MotionSettings motionSettings)
-    {
-        if (backgroundRenderer == null || !leafField.HasLeaves)
+        if (backgroundRenderer == null || !leafField.HasLeaves || !TryResolveCamera(out Camera activeCamera))
             return;
 
         if (InputManager.TryGetPrimaryPointerUpThisFrame(out _))
@@ -110,40 +89,47 @@ public class RevealController : MonoBehaviour
             return;
         }
 
-        if (!TryGetWorldPoint(screenPosition, out Vector2 worldPosition))
-            return;
-
-        if (!IsInsideRevealArea(worldPosition))
+        Vector2 worldPosition = ScreenToWorld(activeCamera, screenPosition);
+        if (!IsInsideBackground(worldPosition))
         {
             isSwiping = false;
             return;
         }
 
-        Vector2 clampedWorldPosition = ClampToRevealArea(worldPosition);
-
         if (!isSwiping)
         {
-            isSwiping = true;
-            lastPointerWorld = clampedWorldPosition;
-            lastSampleWorld = clampedWorldPosition;
-            leafField.RevealAtPoint(clampedWorldPosition, Vector2.zero, brushRadius, motionSettings);
+            BeginSwipe(worldPosition);
             return;
         }
 
-        Vector2 delta = clampedWorldPosition - lastPointerWorld;
+        Vector2 delta = worldPosition - lastPointerWorld;
         if (delta.sqrMagnitude < minSwipeDistance * minSwipeDistance)
             return;
 
-        Vector2 swipeDirection = delta.normalized;
-        SampleBetween(lastSampleWorld, clampedWorldPosition, swipeDirection, motionSettings);
-        lastPointerWorld = clampedWorldPosition;
+        SampleBetween(lastSampleWorld, worldPosition, delta.normalized);
+        lastPointerWorld = worldPosition;
     }
 
-    private void SampleBetween(Vector2 from, Vector2 to, Vector2 swipeDirection, RevealLeafField.MotionSettings motionSettings)
+    private void BeginSwipe(Vector2 worldPosition)
+    {
+        isSwiping = true;
+        lastPointerWorld = worldPosition;
+        lastSampleWorld = worldPosition;
+
+        leafField.RevealAtPoint(
+            worldPosition,
+            Vector2.zero,
+            brushRadius,
+            entryOffset,
+            rotationFromSwipe,
+            randomRotationJitter);
+    }
+
+    private void SampleBetween(Vector2 from, Vector2 to, Vector2 swipeDirection)
     {
         if (sampleSpacing <= 0f)
         {
-            leafField.RevealAtPoint(to, swipeDirection, brushRadius, motionSettings);
+            RevealAtPoint(to, swipeDirection);
             lastSampleWorld = to;
             return;
         }
@@ -155,63 +141,146 @@ public class RevealController : MonoBehaviour
         {
             float t = i / (float)stepCount;
             Vector2 point = Vector2.Lerp(from, to, t);
-            leafField.RevealAtPoint(point, swipeDirection, brushRadius, motionSettings);
+            RevealAtPoint(point, swipeDirection);
         }
 
         lastSampleWorld = to;
     }
 
-    private bool TryGetWorldPoint(Vector2 screenPosition, out Vector2 worldPosition)
+    private void RevealAtPoint(Vector2 point, Vector2 swipeDirection)
+    {
+        leafField.RevealAtPoint(
+            point,
+            swipeDirection,
+            brushRadius,
+            entryOffset,
+            rotationFromSwipe,
+            randomRotationJitter);
+    }
+
+    private bool ValidateSetup()
+    {
+        if (backgroundRenderer == null)
+        {
+            Debug.LogWarning("RevealController requires a background SpriteRenderer.", this);
+            return false;
+        }
+
+        if (leafRoot == null)
+        {
+            Debug.LogWarning("RevealController requires a leafRoot transform.", this);
+            return false;
+        }
+
+        if (leafPrefab == null)
+        {
+            Debug.LogWarning("RevealController requires a leafPrefab.", this);
+            return false;
+        }
+
+        if (leafMask.value == 0)
+        {
+            Debug.LogWarning("RevealController requires a valid leafMask.", this);
+            return false;
+        }
+
+        if (spawnSpacingX <= 0f || spawnSpacingY <= 0f)
+        {
+            Debug.LogWarning("RevealController requires positive spawn spacing values.", this);
+            return false;
+        }
+
+        if (!leafPrefab.TryGetComponent(out RevealLeaf leaf))
+        {
+            Debug.LogWarning("leafPrefab must have a RevealLeaf component on its root.", this);
+            return false;
+        }
+
+        if (!leaf.HasRequiredReferences)
+        {
+            Debug.LogWarning(
+                "leafPrefab RevealLeaf must assign a SpriteRenderer and Collider2D through serialized fields.",
+                this);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void RebuildGrid()
+    {
+        ClearSpawnedLeaves();
+
+        Bounds bounds = backgroundRenderer.bounds;
+        float minX = bounds.min.x - overscanX;
+        float maxX = bounds.max.x + overscanX;
+        float minY = bounds.min.y - overscanY;
+        float maxY = bounds.max.y + overscanY;
+
+        int rowIndex = 0;
+        for (float y = minY; y <= maxY + 0.001f; y += spawnSpacingY)
+        {
+            float xOffset = staggerOddRows && (rowIndex & 1) == 1 ? rowOffsetX : 0f;
+
+            for (float x = minX; x <= maxX + 0.001f; x += spawnSpacingX)
+                SpawnLeafInstance(new Vector2(x + xOffset, y));
+
+            rowIndex++;
+        }
+    }
+
+    private void ClearSpawnedLeaves()
+    {
+        for (int i = leafRoot.childCount - 1; i >= 0; i--)
+        {
+            Transform child = leafRoot.GetChild(i);
+            child.gameObject.SetActive(false);
+            child.SetParent(null);
+
+            if (Application.isPlaying)
+                Destroy(child.gameObject);
+            else
+                DestroyImmediate(child.gameObject);
+        }
+    }
+
+    private void SpawnLeafInstance(Vector2 worldPosition)
+    {
+        GameObject leafInstance = Instantiate(leafPrefab, leafRoot, false);
+        leafInstance.name = leafPrefab.name;
+
+        Transform instanceTransform = leafInstance.transform;
+        Vector3 position = instanceTransform.position;
+        position.x = worldPosition.x;
+        position.y = worldPosition.y;
+        instanceTransform.position = position;
+    }
+
+    private bool TryResolveCamera(out Camera activeCamera)
     {
         if (mainCamera == null)
             mainCamera = Camera.main;
 
-        if (mainCamera == null)
-        {
-            worldPosition = Vector2.zero;
-            return false;
-        }
-
-        Vector3 world = mainCamera.ScreenToWorldPoint(screenPosition);
-        worldPosition = new Vector2(world.x, world.y);
-        return true;
+        activeCamera = mainCamera;
+        return activeCamera != null;
     }
 
-    private bool IsInsideRevealArea(Vector2 worldPosition)
+    private Vector2 ScreenToWorld(Camera activeCamera, Vector2 screenPosition)
+    {
+        Vector3 world = activeCamera.ScreenToWorldPoint(screenPosition);
+        return new Vector2(world.x, world.y);
+    }
+
+    private bool IsInsideBackground(Vector2 worldPosition)
     {
         Bounds bounds = backgroundRenderer.bounds;
         return bounds.Contains(new Vector3(worldPosition.x, worldPosition.y, bounds.center.z));
     }
 
-    private Vector2 ClampToRevealArea(Vector2 worldPosition)
+    private void ResetSwipeState()
     {
-        Bounds bounds = backgroundRenderer.bounds;
-        return new Vector2(
-            Mathf.Clamp(worldPosition.x, bounds.min.x, bounds.max.x),
-            Mathf.Clamp(worldPosition.y, bounds.min.y, bounds.max.y));
-    }
-
-    public void ResetReveal()
-    {
-        ResolveReferences();
-
         isSwiping = false;
         lastPointerWorld = Vector2.zero;
         lastSampleWorld = Vector2.zero;
-
-        leafField.Clear();
-
-        bool rebuilt = gridBuilder.RebuildGrid(
-            backgroundRenderer,
-            leafRoot,
-            leafPrefab,
-            CreateLayoutSettings(),
-            this);
-
-        if (!rebuilt)
-            return;
-
-        leafField.CacheLeaves(leafRoot, leafMask);
-        leafField.HideAllLeaves();
     }
 }
