@@ -31,6 +31,7 @@ public sealed class RevealController : MonoBehaviour
     private readonly RevealLeafField leafField = new RevealLeafField();
 
     private Camera mainCamera;
+    private bool hasSwipeAnchor;
     private bool isSwiping;
     private Vector2 lastPointerWorld;
     private Vector2 lastSampleWorld;
@@ -73,36 +74,45 @@ public sealed class RevealController : MonoBehaviour
 
         if (InputManager.TryGetPrimaryPointerUpThisFrame(out _))
         {
-            isSwiping = false;
+            ResetSwipeState();
             return;
         }
 
         if (!InputManager.TryGetPrimaryPointerHeld(out Vector2 screenPosition))
         {
-            isSwiping = false;
+            ResetSwipeState();
             return;
         }
 
         if (blockInputOverUI && InputManager.IsPrimaryPointerOverUI())
         {
-            isSwiping = false;
+            ResetSwipeState();
             return;
         }
 
         Vector2 worldPosition = ScreenToWorld(activeCamera, screenPosition);
         if (!IsInsideBackground(worldPosition))
         {
-            isSwiping = false;
+            ResetSwipeState();
             return;
         }
 
-        if (!isSwiping)
+        if (!hasSwipeAnchor)
         {
-            BeginSwipe(worldPosition);
+            CacheSwipeAnchor(worldPosition);
             return;
         }
 
         Vector2 delta = worldPosition - lastPointerWorld;
+        if (!isSwiping)
+        {
+            if (delta.sqrMagnitude < minSwipeDistance * minSwipeDistance)
+                return;
+
+            BeginSwipe(worldPosition, delta.normalized);
+            return;
+        }
+
         if (delta.sqrMagnitude < minSwipeDistance * minSwipeDistance)
             return;
 
@@ -110,19 +120,19 @@ public sealed class RevealController : MonoBehaviour
         lastPointerWorld = worldPosition;
     }
 
-    private void BeginSwipe(Vector2 worldPosition)
+    private void CacheSwipeAnchor(Vector2 worldPosition)
     {
-        isSwiping = true;
+        hasSwipeAnchor = true;
         lastPointerWorld = worldPosition;
         lastSampleWorld = worldPosition;
+    }
 
-        leafField.RevealAtPoint(
-            worldPosition,
-            Vector2.zero,
-            brushRadius,
-            entryOffset,
-            rotationFromSwipe,
-            randomRotationJitter);
+    private void BeginSwipe(Vector2 worldPosition, Vector2 swipeDirection)
+    {
+        isSwiping = true;
+        RevealAtPoint(lastSampleWorld, swipeDirection);
+        SampleBetween(lastSampleWorld, worldPosition, swipeDirection);
+        lastPointerWorld = worldPosition;
     }
 
     private void SampleBetween(Vector2 from, Vector2 to, Vector2 swipeDirection)
@@ -279,6 +289,7 @@ public sealed class RevealController : MonoBehaviour
 
     private void ResetSwipeState()
     {
+        hasSwipeAnchor = false;
         isSwiping = false;
         lastPointerWorld = Vector2.zero;
         lastSampleWorld = Vector2.zero;

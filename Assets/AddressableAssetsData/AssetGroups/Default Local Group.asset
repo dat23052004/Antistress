@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 762644ca2bb9f9f48a39d7a04af639ce
+    m_Address: Toy_Gesso
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 81649b6b7114754419fd4ed78482f0f8
     m_Address: Toy_RevealLeaves
     m_ReadOnly: 0

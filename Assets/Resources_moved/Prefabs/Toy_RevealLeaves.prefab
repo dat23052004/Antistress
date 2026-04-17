@@ -113,7 +113,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 0.38627982, g: 0.85660374, b: 0.43238994, a: 0.87058824}
+  m_Color: {r: 0.38627982, g: 0.85660374, b: 0.43238994, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -171,10 +171,10 @@ MonoBehaviour:
   backgroundRenderer: {fileID: 307764989456845266}
   leafRoot: {fileID: 5293896421937454170}
   leafPrefab: {fileID: 4745369304136097634, guid: b0d5187157a412f4787c7754498692c7, type: 3}
-  spawnSpacingX: 0.5
-  spawnSpacingY: 0.6
+  spawnSpacingX: 0.6
+  spawnSpacingY: 0.7
   staggerOddRows: 1
-  rowOffsetX: 0.25
+  rowOffsetX: 0.3
   overscanX: 0.25
   overscanY: 0.3
   leafMask:
