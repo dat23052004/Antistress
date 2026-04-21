@@ -1,152 +1,94 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+internal readonly struct GessoStrokeStyle
+{
+    public readonly float baseStrokeWidth;
+    public readonly Color color;
+    public readonly string sortingLayerName;
+    public readonly int sortingOrder;
+
+    public GessoStrokeStyle(float baseStrokeWidth, Color color, string sortingLayerName, int sortingOrder)
+    {
+        this.baseStrokeWidth = baseStrokeWidth;
+        this.color = color;
+        this.sortingLayerName = sortingLayerName;
+        this.sortingOrder = sortingOrder;
+    }
+}
+
 [DisallowMultipleComponent]
 public sealed class GessoStrokeSegment : MonoBehaviour
 {
     private const float MinSegmentLengthSqr = 0.000001f;
-    private static readonly Dictionary<Texture2D, Sprite> SpriteCache = new Dictionary<Texture2D, Sprite>();
 
     private Vector2 start;
     private Vector2 end;
+    private GessoBoard board;
+    private readonly List<SpriteRenderer> stamps = new List<SpriteRenderer>();
 
-    public void Initialize(
-        Vector2 start,
-        Vector2 end,
-        float width,
-        Color color,
-        Texture2D stampTexture,
-        Material material,
-        string sortingLayerName,
-        int sortingOrder,
-        float stampSpacing,
-        float stampOffsetJitter,
-        Vector2 stampScaleRange,
-        Vector2 stampAlphaRange,
-        float stampAngleJitter)
+    internal void Initialize(GessoBoard board, GessoBrushPoint from, GessoBrushPoint to, GessoStrokeStyle style)
     {
-        this.start = start;
-        this.end = end;
+        this.board = board;
+        start = from.worldPosition;
+        end = to.worldPosition;
 
-        Sprite stampSprite = GetOrCreateSprite(stampTexture);
-        if (stampSprite == null)
-            return;
+        if (board == null) return;
 
         float distance = Vector2.Distance(start, end);
-        Vector2 direction = distance > 0.0001f ? (end - start) / distance : Vector2.right;
-        Vector2 normal = new Vector2(-direction.y, direction.x);
+        float scale = style.baseStrokeWidth / board.StampSpriteWorldWidth;
+        float spacing = Mathf.Clamp(style.baseStrokeWidth * 0.4f, 0.02f, 0.06f);
 
-        float spacing = Mathf.Max(0.01f, stampSpacing);
-        int stampCount = Mathf.Max(1, Mathf.CeilToInt(distance / spacing) + 1);
-        float baseAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-        float spriteWorldWidth = Mathf.Max(stampSprite.bounds.size.x, 0.0001f);
-        float scaleBase = width / spriteWorldWidth;
-
-        Vector2 alphaRange = SortRange(stampAlphaRange);
-        Vector2 scaleRange = SortRange(stampScaleRange);
-
-        for (int i = 0; i < stampCount; i++)
+        bool drewFinalStamp = false;
+        float d = 0f;
+        while (d <= distance + 0.0001f)
         {
-            float t = stampCount == 1 ? 0.5f : i / (float)(stampCount - 1);
-            Vector2 stampPosition = Vector2.Lerp(start, end, t);
-            stampPosition += normal * Random.Range(-stampOffsetJitter, stampOffsetJitter);
-            stampPosition += direction * Random.Range(-stampOffsetJitter * 0.35f, stampOffsetJitter * 0.35f);
-
-            CreateStamp(
-                stampSprite,
-                stampPosition,
-                baseAngle,
-                scaleBase,
-                color,
-                material,
-                sortingLayerName,
-                sortingOrder,
-                scaleRange,
-                alphaRange,
-                stampAngleJitter);
+            float t = distance > 0.0001f ? Mathf.Clamp01(d / distance) : 0f;
+            PlaceStamp(Vector2.Lerp(from.worldPosition, to.worldPosition, t),
+                scale, Mathf.Lerp(from.alpha01, to.alpha01, t), style);
+            d += spacing;
+            drewFinalStamp = t >= 0.999f;
         }
+
+        if (!drewFinalStamp)
+            PlaceStamp(to.worldPosition, scale, to.alpha01, style);
     }
 
     public float DistanceTo(Vector2 point)
     {
-        Vector2 segment = end - start;
-        float segmentLengthSqr = segment.sqrMagnitude;
-
-        if (segmentLengthSqr <= MinSegmentLengthSqr)
+        Vector2 seg = end - start;
+        float lenSqr = seg.sqrMagnitude;
+        if (lenSqr <= MinSegmentLengthSqr)
             return Vector2.Distance(point, start);
-
-        float t = Vector2.Dot(point - start, segment) / segmentLengthSqr;
-        t = Mathf.Clamp01(t);
-
-        Vector2 closestPoint = start + segment * t;
-        return Vector2.Distance(point, closestPoint);
+        float t = Mathf.Clamp01(Vector2.Dot(point - start, seg) / lenSqr);
+        return Vector2.Distance(point, start + seg * t);
     }
 
-    private void CreateStamp(
-        Sprite sprite,
-        Vector2 position,
-        float baseAngle,
-        float scaleBase,
-        Color baseColor,
-        Material material,
-        string sortingLayerName,
-        int sortingOrder,
-        Vector2 scaleRange,
-        Vector2 alphaRange,
-        float angleJitter)
+    private void PlaceStamp(Vector2 position, float scale, float alpha, GessoStrokeStyle style)
     {
-        GameObject stampObject = new GameObject("Stamp");
-        stampObject.transform.SetParent(transform, false);
-        stampObject.transform.position = new Vector3(position.x, position.y, transform.position.z);
-        stampObject.transform.rotation = Quaternion.Euler(
-            0f,
-            0f,
-            baseAngle + Random.Range(-angleJitter, angleJitter));
+        if (alpha <= 0.0001f) return;
 
-        float scaleX = scaleBase * Random.Range(scaleRange.x, scaleRange.y);
-        float scaleY = scaleBase * Random.Range(scaleRange.x * 0.85f, scaleRange.y * 1.05f);
-        stampObject.transform.localScale = new Vector3(scaleX, scaleY, 1f);
+        SpriteRenderer sr = board.AcquireStamp(transform);
+        if (sr == null) return;
 
-        SpriteRenderer renderer = stampObject.AddComponent<SpriteRenderer>();
-        renderer.sprite = sprite;
-        renderer.sortingLayerName = sortingLayerName;
-        renderer.sortingOrder = sortingOrder;
+        sr.transform.SetPositionAndRotation(
+            new Vector3(position.x, position.y, transform.position.z), Quaternion.identity);
+        sr.transform.localScale = new Vector3(scale, scale, 1f);
+        sr.sortingLayerName = style.sortingLayerName;
+        sr.sortingOrder = style.sortingOrder;
 
-        if (material != null)
-            renderer.sharedMaterial = material;
+        Color c = style.color;
+        c.a *= Mathf.Clamp01(alpha);
+        sr.color = c;
 
-        Color stampColor = baseColor;
-        stampColor.a *= Random.Range(alphaRange.x, alphaRange.y);
-        renderer.color = stampColor;
+        stamps.Add(sr);
     }
 
-    private static Sprite GetOrCreateSprite(Texture2D texture)
+    internal void ReleaseStamps()
     {
-        if (texture == null)
-            return null;
-
-        if (SpriteCache.TryGetValue(texture, out Sprite cachedSprite) && cachedSprite != null)
-            return cachedSprite;
-
-        Sprite runtimeSprite = Sprite.Create(
-            texture,
-            new Rect(0f, 0f, texture.width, texture.height),
-            new Vector2(0.5f, 0.5f),
-            100f,
-            0,
-            SpriteMeshType.FullRect);
-
-        runtimeSprite.name = $"{texture.name}_RuntimeSprite";
-        runtimeSprite.hideFlags = HideFlags.HideAndDontSave;
-        SpriteCache[texture] = runtimeSprite;
-        return runtimeSprite;
-    }
-
-    private static Vector2 SortRange(Vector2 range)
-    {
-        return range.x <= range.y
-            ? range
-            : new Vector2(range.y, range.x);
+        if (board != null)
+            for (int i = 0; i < stamps.Count; i++)
+                board.ReleaseStamp(stamps[i]);
+        stamps.Clear();
     }
 }

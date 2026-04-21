@@ -536,18 +536,16 @@ MonoBehaviour:
   boardCollider: {fileID: 4630837648305971576}
   boardRenderer: {fileID: 4620571474979300784}
   strokeRoot: {fileID: 6489748692090886088}
-  strokeMaterial: {fileID: 0}
-  strokeStampTexture: {fileID: 2800000, guid: 2d838556c32ee844a8e47e7b9e78fc5e, type: 3}
+  strokeStampTexture: {fileID: 2800000, guid: d7b4858151cece84199a8f5d32f07272, type: 3}
   sampleSpacing: 0.08
   strokeWidth: 0.12
-  eraseRadius: 0.18
-  stampSpacing: 0.05
-  stampOffsetJitter: 0.02
-  stampScaleRange: {x: 0.85, y: 1.15}
-  stampAlphaRange: {x: 0.45, y: 0.8}
-  stampAngleJitter: 24
+  eraseRadius: 1
+  stampOffsetJitter: 0.01
   strokeSortingLayerName: Default
   strokeSortingOrder: 1
+  stampPrefab: {fileID: 6520018510713999610, guid: 4dac4ce5fd85d164cbfe9021798d376e, type: 3}
+  poolDefaultCapacity: 256
+  poolMaxSize: 4096
 --- !u!1 &4138722311435803767
 GameObject:
   m_ObjectHideFlags: 0
@@ -605,6 +603,114 @@ MonoBehaviour:
   - {fileID: 719356022055816916}
   - {fileID: 6194341333607558204}
   blockInputOverUI: 0
+  hardwareBlend: 0.65
+  speedRangeMin: 0
+  speedRangeMax: 8
+  radiusPixelsMin: 0
+  radiusPixelsMax: 28
+  speedToPressureCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.2
+      value: 0.85
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0.15
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  widthCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.3
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.5
+      value: 0.8
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1.15
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  alphaCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.12
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.5
+      value: 0.6
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  startTaperLength: 0.08
+  endTaperLength: 0.14
+  minimumTailLength: 0.05
+  syntheticTailLength: 0.08
 --- !u!1 &5059908609206784714
 GameObject:
   m_ObjectHideFlags: 0

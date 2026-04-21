@@ -1,6 +1,30 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using InputTouchPhase = UnityEngine.InputSystem.TouchPhase;
+
+public readonly struct PrimaryPointerSample
+{
+    public readonly Vector2 screenPosition;
+    public readonly bool isTouch;
+    public readonly float pressure;
+    public readonly Vector2 radius;
+    public readonly InputTouchPhase phase;
+
+    public PrimaryPointerSample(
+        Vector2 screenPosition,
+        bool isTouch,
+        float pressure,
+        Vector2 radius,
+        InputTouchPhase phase)
+    {
+        this.screenPosition = screenPosition;
+        this.isTouch = isTouch;
+        this.pressure = pressure;
+        this.radius = radius;
+        this.phase = phase;
+    }
+}
 
 public static class InputManager
 {
@@ -31,22 +55,64 @@ public static class InputManager
     public static bool TryGetPrimaryPointerDownThisFrame(out Vector2 screenPosition)
     {
         EnsureInitialized();
-        return TryGetTouchPointer(PointerQuery.Down, out screenPosition) ||
-               TryGetMousePointer(PointerQuery.Down, out screenPosition);
+
+        if (TryGetPrimaryPointerDownDetailed(out PrimaryPointerSample sample))
+        {
+            screenPosition = sample.screenPosition;
+            return true;
+        }
+
+        screenPosition = Vector2.zero;
+        return false;
     }
 
     public static bool TryGetPrimaryPointerHeld(out Vector2 screenPosition)
     {
         EnsureInitialized();
-        return TryGetTouchPointer(PointerQuery.Held, out screenPosition) ||
-               TryGetMousePointer(PointerQuery.Held, out screenPosition);
+
+        if (TryGetPrimaryPointerHeldDetailed(out PrimaryPointerSample sample))
+        {
+            screenPosition = sample.screenPosition;
+            return true;
+        }
+
+        screenPosition = Vector2.zero;
+        return false;
     }
 
     public static bool TryGetPrimaryPointerUpThisFrame(out Vector2 screenPosition)
     {
         EnsureInitialized();
-        return TryGetTouchPointer(PointerQuery.Up, out screenPosition) ||
-               TryGetMousePointer(PointerQuery.Up, out screenPosition);
+
+        if (TryGetPrimaryPointerUpDetailed(out PrimaryPointerSample sample))
+        {
+            screenPosition = sample.screenPosition;
+            return true;
+        }
+
+        screenPosition = Vector2.zero;
+        return false;
+    }
+
+    public static bool TryGetPrimaryPointerDownDetailed(out PrimaryPointerSample sample)
+    {
+        EnsureInitialized();
+        return TryGetTouchPointer(PointerQuery.Down, out sample) ||
+               TryGetMousePointer(PointerQuery.Down, out sample);
+    }
+
+    public static bool TryGetPrimaryPointerHeldDetailed(out PrimaryPointerSample sample)
+    {
+        EnsureInitialized();
+        return TryGetTouchPointer(PointerQuery.Held, out sample) ||
+               TryGetMousePointer(PointerQuery.Held, out sample);
+    }
+
+    public static bool TryGetPrimaryPointerUpDetailed(out PrimaryPointerSample sample)
+    {
+        EnsureInitialized();
+        return TryGetTouchPointer(PointerQuery.Up, out sample) ||
+               TryGetMousePointer(PointerQuery.Up, out sample);
     }
 
     public static Vector2 GetTilt()
@@ -101,7 +167,7 @@ public static class InputManager
         InputSystem.EnableDevice(Accelerometer.current);
     }
 
-    private static bool TryGetTouchPointer(PointerQuery query, out Vector2 screenPosition)
+    private static bool TryGetTouchPointer(PointerQuery query, out PrimaryPointerSample sample)
     {
         if (Touchscreen.current != null)
         {
@@ -113,7 +179,12 @@ public static class InputManager
 
             if (isRelevantTouch)
             {
-                screenPosition = touch.position.ReadValue();
+                sample = new PrimaryPointerSample(
+                    touch.position.ReadValue(),
+                    true,
+                    touch.pressure.ReadValue(),
+                    touch.radius.ReadValue(),
+                    touch.phase.ReadValue());
 
                 switch (query)
                 {
@@ -126,15 +197,20 @@ public static class InputManager
                 }
             }
         }
-        screenPosition = Vector2.zero;
+        sample = default;
         return false;
     }
 
-    private static bool TryGetMousePointer(PointerQuery query, out Vector2 screenPosition)
+    private static bool TryGetMousePointer(PointerQuery query, out PrimaryPointerSample sample)
     {
         if (Mouse.current != null)
         {
-            screenPosition = Mouse.current.position.ReadValue();
+            sample = new PrimaryPointerSample(
+                Mouse.current.position.ReadValue(),
+                false,
+                0f,
+                Vector2.zero,
+                GetMousePhase(query));
 
             switch (query)
             {
@@ -147,8 +223,23 @@ public static class InputManager
             }
         }
 
-        screenPosition = Vector2.zero;
+        sample = default;
         return false;
+    }
+
+    private static InputTouchPhase GetMousePhase(PointerQuery query)
+    {
+        switch (query)
+        {
+            case PointerQuery.Down:
+                return InputTouchPhase.Began;
+            case PointerQuery.Held:
+                return InputTouchPhase.Moved;
+            case PointerQuery.Up:
+                return InputTouchPhase.Ended;
+            default:
+                return InputTouchPhase.None;
+        }
     }
 
     private static Vector2 ReadEditorTilt()

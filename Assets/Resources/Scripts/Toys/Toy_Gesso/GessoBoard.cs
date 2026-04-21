@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 
 [DisallowMultipleComponent]
 public sealed class GessoBoard : MonoBehaviour
@@ -8,219 +9,195 @@ public sealed class GessoBoard : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private Collider2D boardCollider;
-    [SerializeField] private SpriteRenderer boardRenderer;
     [SerializeField] private Transform strokeRoot;
-    [SerializeField] private Material strokeMaterial;
-    [SerializeField] private Texture2D strokeStampTexture;
 
     [Header("Stroke")]
     [SerializeField] private float sampleSpacing = 0.08f;
     [SerializeField] private float strokeWidth = 0.12f;
     [SerializeField] private float eraseRadius = 0.18f;
 
-    [Header("Stamp Look")]
-    [SerializeField] private float stampSpacing = 0.05f;
-    [SerializeField] private float stampOffsetJitter = 0.02f;
-    [SerializeField] private Vector2 stampScaleRange = new Vector2(0.85f, 1.15f);
-    [SerializeField] private Vector2 stampAlphaRange = new Vector2(0.45f, 0.8f);
-    [SerializeField] private float stampAngleJitter = 24f;
-
     [Header("Sorting")]
     [SerializeField] private string strokeSortingLayerName = "Default";
     [SerializeField] private int strokeSortingOrder = 1;
 
+    [Header("Pooling")]
+    [SerializeField] private GameObject stampPrefab;
+    [SerializeField] private int poolDefaultCapacity = 256;
+    [SerializeField] private int poolMaxSize = 4096;
+
     private readonly List<GessoStrokeSegment> strokeSegments = new List<GessoStrokeSegment>();
-    private bool hasWarnedInvalidSetup;
+    private ObjectPool<SpriteRenderer> stampPool;
+    private Transform stampPoolHolder;
+    private float stampSpriteWorldWidth = 1f;
+    private bool hasWarnedSetup;
 
-    private void Reset()
-    {
-        AutoAssignReferences();
-    }
+    internal float StampSpriteWorldWidth => stampSpriteWorldWidth;
 
-    private void OnValidate()
-    {
-        AutoAssignReferences();
-    }
+    private void Awake() => InitializeStampPool();
+    private void OnDestroy() => stampPool?.Dispose();
+    private void Reset() => AutoAssignReferences();
+    private void OnValidate() => AutoAssignReferences();
 
-    public bool ContainsPoint(Vector2 worldPoint)
+    public bool ContainsPoint(Vector2 worldPoint) =>
+        boardCollider != null && boardCollider.OverlapPoint(worldPoint);
+
+    internal void DrawBetween(GessoBrushPoint from, GessoBrushPoint to, Color color)
     {
-        if (boardCollider == null)
+        if (!HasRequiredSetup()) return;
+
+        GessoStrokeStyle style = new(strokeWidth, color, strokeSortingLayerName, strokeSortingOrder);
+        int steps = GetStepCount(Vector2.Distance(from.worldPosition, to.worldPosition));
+        GessoBrushPoint prev = from;
+        for (int i = 1; i <= steps; i++)
         {
-            WarnInvalidSetup("GessoBoard requires a Collider2D assigned to boardCollider.");
-            return false;
+            float t = i / (float)steps;
+            GessoBrushPoint cur = LerpBrushPoint(from, to, t);
+            AddStrokeSegment(prev, cur, style);
+            prev = cur;
         }
-
-        return boardCollider.OverlapPoint(worldPoint);
-    }
-
-    public void DrawBetween(Vector2 from, Vector2 to, Color color)
-    {
-        if (!HasRequiredSetup())
-            return;
-
-        SamplePath(
-            from,
-            to,
-            CreateStrokeSegment,
-            color);
     }
 
     public void EraseBetween(Vector2 from, Vector2 to)
     {
-        if (!HasRequiredSetup())
-            return;
+        if (!HasRequiredSetup()) return;
 
-        SamplePath(
-            from,
-            to,
-            EraseAtPoint,
-            default);
+        int steps = GetStepCount(Vector2.Distance(from, to));
+        float radius = Mathf.Max(eraseRadius, 0.0001f);
+        for (int i = 1; i <= steps; i++)
+        {
+            Vector2 point = Vector2.Lerp(from, to, i / (float)steps);
+            for (int j = strokeSegments.Count - 1; j >= 0; j--)
+            {
+                if (strokeSegments[j] == null) { strokeSegments.RemoveAt(j); continue; }
+                if (strokeSegments[j].DistanceTo(point) <= radius)
+                {
+                    DestroySegment(strokeSegments[j]);
+                    strokeSegments.RemoveAt(j);
+                }
+            }
+        }
     }
 
     public void ClearAllStrokes()
     {
         for (int i = strokeSegments.Count - 1; i >= 0; i--)
-        {
-            if (strokeSegments[i] == null)
-                continue;
-
-            DestroySegment(strokeSegments[i].gameObject);
-        }
-
+            if (strokeSegments[i] != null) DestroySegment(strokeSegments[i]);
         strokeSegments.Clear();
     }
 
-    private void SamplePath(
-        Vector2 from,
-        Vector2 to,
-        System.Action<Vector2, Vector2, Color> segmentAction,
-        Color color)
+    internal SpriteRenderer AcquireStamp(Transform parent)
     {
-        float distance = Vector2.Distance(from, to);
-        int stepCount = sampleSpacing <= 0f
-            ? 1
-            : Mathf.Max(1, Mathf.CeilToInt(distance / sampleSpacing));
+        if (stampPool == null) InitializeStampPool();
+        SpriteRenderer stamp = stampPool.Get();
+        if (stamp != null && parent != null) stamp.transform.SetParent(parent, false);
+        return stamp;
+    }
 
-        Vector2 previousPoint = from;
-        for (int i = 1; i <= stepCount; i++)
+    internal void ReleaseStamp(SpriteRenderer stamp)
+    {
+        if (stamp != null && stampPool != null) stampPool.Release(stamp);
+    }
+
+    private void InitializeStampPool()
+    {
+        if (stampPool != null) return;
+
+        if (stampPoolHolder == null)
         {
-            float t = i / (float)stepCount;
-            Vector2 currentPoint = Vector2.Lerp(from, to, t);
-            segmentAction(previousPoint, currentPoint, color);
-            previousPoint = currentPoint;
+            GameObject holder = new("GessoStampPool");
+            holder.transform.SetParent(transform, false);
+            holder.SetActive(false);
+            stampPoolHolder = holder.transform;
         }
-    }
 
-    private void CreateStrokeSegment(Vector2 from, Vector2 to, Color color)
-    {
-        if ((to - from).sqrMagnitude <= MinSegmentLengthSqr)
-            return;
-
-        GameObject segmentObject = new GameObject("GessoStrokeSegment");
-        segmentObject.transform.SetParent(strokeRoot, false);
-
-        GessoStrokeSegment segment = segmentObject.AddComponent<GessoStrokeSegment>();
-        segment.Initialize(
-            from,
-            to,
-            strokeWidth,
-            color,
-            strokeStampTexture,
-            strokeMaterial,
-            strokeSortingLayerName,
-            strokeSortingOrder,
-            stampSpacing,
-            stampOffsetJitter,
-            stampScaleRange,
-            stampAlphaRange,
-            stampAngleJitter);
-
-        strokeSegments.Add(segment);
-    }
-
-    private void EraseAtPoint(Vector2 from, Vector2 to, Color _)
-    {
-        Vector2 samplePoint = to;
-        float radius = Mathf.Max(eraseRadius, 0.0001f);
-
-        for (int i = strokeSegments.Count - 1; i >= 0; i--)
+        if (stampPrefab != null &&
+            stampPrefab.TryGetComponent(out SpriteRenderer prefabSr) &&
+            prefabSr.sprite != null)
         {
-            GessoStrokeSegment segment = strokeSegments[i];
-            if (segment == null)
+            stampSpriteWorldWidth = Mathf.Max(prefabSr.sprite.bounds.size.x, 0.0001f);
+        }
+
+        stampPool = new ObjectPool<SpriteRenderer>(
+            createFunc: CreateStamp,
+            actionOnGet: sr => { if (sr) sr.gameObject.SetActive(true); },
+            actionOnRelease: sr =>
             {
-                strokeSegments.RemoveAt(i);
-                continue;
-            }
-
-            if (segment.DistanceTo(samplePoint) > radius)
-                continue;
-
-            DestroySegment(segment.gameObject);
-            strokeSegments.RemoveAt(i);
-        }
+                if (!sr) return;
+                sr.transform.SetParent(stampPoolHolder, false);
+                sr.gameObject.SetActive(false);
+            },
+            actionOnDestroy: sr =>
+            {
+                if (!sr) return;
+                if (Application.isPlaying) Destroy(sr.gameObject);
+                else DestroyImmediate(sr.gameObject);
+            },
+            defaultCapacity: Mathf.Max(0, poolDefaultCapacity),
+            maxSize: Mathf.Max(1, poolMaxSize));
     }
+
+    private SpriteRenderer CreateStamp()
+    {
+        GameObject go;
+        if (stampPrefab != null)
+        {
+            go = Instantiate(stampPrefab, stampPoolHolder);
+        }
+        else
+        {
+            go = new GameObject("Stamp");
+            go.transform.SetParent(stampPoolHolder, false);
+        }
+
+        if (!go.TryGetComponent(out SpriteRenderer sr))
+            sr = go.AddComponent<SpriteRenderer>();
+
+        go.SetActive(false);
+        return sr;
+    }
+
+    private void AddStrokeSegment(GessoBrushPoint from, GessoBrushPoint to, GessoStrokeStyle style)
+    {
+        if ((to.worldPosition - from.worldPosition).sqrMagnitude <= MinSegmentLengthSqr) return;
+
+        GameObject go = new("GessoStrokeSegment");
+        go.transform.SetParent(strokeRoot, false);
+        GessoStrokeSegment seg = go.AddComponent<GessoStrokeSegment>();
+        seg.Initialize(this, from, to, style);
+        strokeSegments.Add(seg);
+    }
+
+    private void DestroySegment(GessoStrokeSegment seg)
+    {
+        seg.ReleaseStamps();
+        if (Application.isPlaying) Destroy(seg.gameObject);
+        else DestroyImmediate(seg.gameObject);
+    }
+
+    private int GetStepCount(float distance) =>
+        sampleSpacing > 0f ? Mathf.Max(1, Mathf.CeilToInt(distance / sampleSpacing)) : 1;
+
+    private static GessoBrushPoint LerpBrushPoint(GessoBrushPoint a, GessoBrushPoint b, float t) =>
+        new(Vector2.Lerp(a.worldPosition, b.worldPosition, t),
+            Mathf.Lerp(a.strokeDistance, b.strokeDistance, t),
+            Mathf.Lerp(a.speed, b.speed, t),
+            Mathf.Lerp(a.alpha01, b.alpha01, t));
 
     private bool HasRequiredSetup()
     {
-        if (boardCollider == null)
+        if (boardCollider != null && strokeRoot != null && stampPrefab != null && strokeWidth > 0f)
+            return true;
+        if (!hasWarnedSetup)
         {
-            WarnInvalidSetup("GessoBoard requires a Collider2D assigned to boardCollider.");
-            return false;
+            hasWarnedSetup = true;
+            Debug.LogWarning("GessoBoard: requires boardCollider, strokeRoot, stampPrefab, and strokeWidth > 0.", this);
         }
-
-        if (boardRenderer == null)
-        {
-            WarnInvalidSetup("GessoBoard requires a SpriteRenderer assigned to boardRenderer.");
-            return false;
-        }
-
-        if (strokeRoot == null)
-        {
-            WarnInvalidSetup("GessoBoard requires a Transform assigned to strokeRoot.");
-            return false;
-        }
-
-        if (strokeWidth <= 0f)
-        {
-            WarnInvalidSetup("GessoBoard requires strokeWidth to be greater than zero.");
-            return false;
-        }
-
-        if (strokeStampTexture == null)
-        {
-            WarnInvalidSetup("GessoBoard requires a Texture2D assigned to strokeStampTexture.");
-            return false;
-        }
-
-        return true;
+        return false;
     }
 
     private void AutoAssignReferences()
     {
         if (boardCollider == null)
             boardCollider = GetComponent<Collider2D>();
-
-        if (boardRenderer == null)
-            boardRenderer = GetComponent<SpriteRenderer>();
-    }
-
-    private void WarnInvalidSetup(string message)
-    {
-        if (hasWarnedInvalidSetup)
-            return;
-
-        hasWarnedInvalidSetup = true;
-        Debug.LogWarning(message, this);
-    }
-
-    private static void DestroySegment(GameObject segmentObject)
-    {
-        if (segmentObject == null)
-            return;
-
-        if (Application.isPlaying)
-            Destroy(segmentObject);
-        else
-            DestroyImmediate(segmentObject);
     }
 }
