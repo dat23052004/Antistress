@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -17,6 +18,46 @@ public class EnvironmentManager : Singleton<EnvironmentManager>
     public void SwitchToMenu() => LoadEnvironmentByType(EnvironmentType.Menu, 0);
     public void SwitchToToy(int toyId) => LoadEnvironmentByType(EnvironmentType.Toy, toyId);
     public void SwitchToGame(int gameIndex) => LoadEnvironmentByType(EnvironmentType.Game, gameIndex);
+
+    public bool SwitchToRandomPlayableEnvironment(out EnvironmentType selectedType)
+    {
+        selectedType = EnvironmentType.Menu;
+        EnsureEnvironmentData();
+
+        if (environmentData == null)
+        {
+            Debug.LogError("EnvironmentManager could not find EnvironmentData.");
+            return false;
+        }
+
+        List<EnvironmentEntry> playableEnvironments = new List<EnvironmentEntry>();
+
+        if (environmentData.environments != null)
+        {
+            foreach (EnvironmentEntry environment in environmentData.environments)
+            {
+                if (environment != null &&
+                    environment.type != EnvironmentType.Menu &&
+                    !string.IsNullOrEmpty(environment.environmentKey))
+                {
+                    playableEnvironments.Add(environment);
+                }
+            }
+        }
+
+        if (playableEnvironments.Count == 0)
+        {
+            Debug.LogError("No playable environments found for random selection.");
+            return false;
+        }
+
+        EnvironmentEntry randomEnvironment = playableEnvironments[Random.Range(0, playableEnvironments.Count)];
+        selectedType = randomEnvironment.type;
+
+        Debug.Log($"Random environment selected: {randomEnvironment.displayName}");
+        StartCoroutine(LoadEnvironmentAsync(randomEnvironment));
+        return true;
+    }
 
     private void LoadEnvironmentByType(EnvironmentType type, int id)
     {
@@ -40,6 +81,8 @@ public class EnvironmentManager : Singleton<EnvironmentManager>
 
     private IEnumerator LoadEnvironmentAsync(EnvironmentEntry env)
     {
+        AudioManager.Ins.StopAllSfxLoops();
+
         if (currentEnvironment != null)
         {
             Addressables.ReleaseInstance(currentEnvironment);

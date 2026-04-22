@@ -28,6 +28,9 @@ public sealed class RevealController : MonoBehaviour
     [SerializeField] private float rotationFromSwipe = 16f;
     [SerializeField] private float randomRotationJitter = 6f;
 
+    [Header("Audio")]
+    [SerializeField, Min(0f)] private float swipeSoundInterval = 0.12f;
+
     private readonly RevealLeafField leafField = new RevealLeafField();
 
     private Camera mainCamera;
@@ -35,6 +38,7 @@ public sealed class RevealController : MonoBehaviour
     private bool isSwiping;
     private Vector2 lastPointerWorld;
     private Vector2 lastSampleWorld;
+    private float nextSwipeSoundTime;
 
     private void Awake()
     {
@@ -47,8 +51,6 @@ public sealed class RevealController : MonoBehaviour
         HandleInput();
         leafField.UpdateAnimations(Time.deltaTime, revealDuration);
 
-        if (InputManager.ResetPressedThisFrame())
-            ResetReveal();
     }
 
     [ContextMenu("Reset Reveal")]
@@ -130,6 +132,7 @@ public sealed class RevealController : MonoBehaviour
     private void BeginSwipe(Vector2 worldPosition, Vector2 swipeDirection)
     {
         isSwiping = true;
+        PlaySwipeSound(true);
         RevealAtPoint(lastSampleWorld, swipeDirection);
         SampleBetween(lastSampleWorld, worldPosition, swipeDirection);
         lastPointerWorld = worldPosition;
@@ -137,6 +140,8 @@ public sealed class RevealController : MonoBehaviour
 
     private void SampleBetween(Vector2 from, Vector2 to, Vector2 swipeDirection)
     {
+        PlaySwipeSound(false);
+
         if (sampleSpacing <= 0f)
         {
             RevealAtPoint(to, swipeDirection);
@@ -157,15 +162,26 @@ public sealed class RevealController : MonoBehaviour
         lastSampleWorld = to;
     }
 
+    private void PlaySwipeSound(bool force)
+    {
+        float now = Time.unscaledTime;
+        if (!force && now < nextSwipeSoundTime)
+            return;
+
+        AudioManager.Ins.PlaySfx(SfxCue.RevealSwipe);
+        nextSwipeSoundTime = now + Mathf.Max(0f, swipeSoundInterval);
+    }
+
     private void RevealAtPoint(Vector2 point, Vector2 swipeDirection)
     {
-        leafField.RevealAtPoint(
+        int revealedCount = leafField.RevealAtPoint(
             point,
             swipeDirection,
             brushRadius,
             entryOffset,
             rotationFromSwipe,
             randomRotationJitter);
+
     }
 
     private bool ValidateSetup()
@@ -293,5 +309,6 @@ public sealed class RevealController : MonoBehaviour
         isSwiping = false;
         lastPointerWorld = Vector2.zero;
         lastSampleWorld = Vector2.zero;
+        nextSwipeSoundTime = 0f;
     }
 }

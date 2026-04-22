@@ -55,7 +55,7 @@ internal sealed class RevealLeafField
             leaves[i].HideInstant();
     }
 
-    public void RevealAtPoint(
+    public int RevealAtPoint(
         Vector2 worldPoint,
         Vector2 swipeDirection,
         float brushRadius,
@@ -64,8 +64,9 @@ internal sealed class RevealLeafField
         float randomRotationJitter)
     {
         if (brushRadius <= 0f || leaves.Count == 0)
-            return;
+            return 0;
 
+        int revealedCount = 0;
         int hitCount = Physics2D.OverlapCircle(worldPoint, brushRadius, overlapFilter, overlapResults);
 
         for (int i = 0; i < hitCount; i++)
@@ -78,8 +79,13 @@ internal sealed class RevealLeafField
                 continue;
 
             if (leaf.Reveal(swipeDirection, entryOffset, rotationFromSwipe, randomRotationJitter))
+            {
                 animatingLeaves.Add(leaf);
+                revealedCount++;
+            }
         }
+
+        return revealedCount;
     }
 
     public void UpdateAnimations(float deltaTime, float revealDuration)

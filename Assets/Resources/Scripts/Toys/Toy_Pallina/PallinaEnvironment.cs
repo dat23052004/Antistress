@@ -12,6 +12,7 @@ public class PallinaEnvironment : MonoBehaviour, IEnvironmentStart
             Debug.Log(ball.name);
             Rigidbody2D rb = ball.GetComponentInChildren<Rigidbody2D>();
             if (rb == null) continue;
+            rb.gravityScale = 0f;
             rb.bodyType = RigidbodyType2D.Dynamic;
         }
     }

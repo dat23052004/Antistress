@@ -21,6 +21,7 @@ public class TastieraButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
         Debug.Log("Pointer DOWN on: " + gameObject.name);
         if (isPressed) return;
         isPressed = true;
+        AudioManager.Ins.PlaySfx(SfxCue.KeyboardDown);
         
         if (playRoutine != null) StopCoroutine(playRoutine);
         playRoutine = StartCoroutine(PlayFramesForward());
@@ -30,6 +31,7 @@ public class TastieraButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
     {
         if (!isPressed) return;
         isPressed = false;
+        AudioManager.Ins.PlaySfx(SfxCue.KeyboardUp);
 
         if (playRoutine != null) StopCoroutine(playRoutine);
         playRoutine = StartCoroutine(PlayFramesBackward());

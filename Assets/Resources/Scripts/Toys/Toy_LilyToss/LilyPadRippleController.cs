@@ -42,6 +42,7 @@ public class LilyPadRippleController : MonoBehaviour
 
         lastRipplePos = pos;
         rippleTimer = 0;
+        AudioManager.Ins.PlaySfx(SfxCue.LilyDrag);
         SpawnRipple(dragRipple, pos);
     }
 

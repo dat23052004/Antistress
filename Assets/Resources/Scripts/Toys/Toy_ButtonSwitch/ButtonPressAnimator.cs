@@ -26,6 +26,7 @@ public class ButtonPressAnimator : MonoBehaviour, IPointerDownHandler, IPointerU
     {
         if (isPressed) return;
         isPressed = true;
+        AudioManager.Ins.PlaySfx(SfxCue.ToyButtonDown);
 
         // Chạy anim nút bấm
         animator.Play("Press", 0, 0f);
@@ -37,6 +38,7 @@ public class ButtonPressAnimator : MonoBehaviour, IPointerDownHandler, IPointerU
     {
         if (!isPressed) return;
         isPressed = false;
+        AudioManager.Ins.PlaySfx(SfxCue.ToyButtonUp);
 
         // Chạy anim bật lại
         animator.Play("Release", 0, 0f);

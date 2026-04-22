@@ -44,8 +44,20 @@ public class GameManager : Singleton<GameManager>
         SwitchState(GameState.InToy);
     }
 
+    public void StartRandomEnvironment()
+    {
+        if (!EnvironmentManager.Ins.SwitchToRandomPlayableEnvironment(out EnvironmentType selectedType))
+            return;
+
+        if (selectedType == EnvironmentType.Game)
+            SwitchState(GameState.InGame);
+        else
+            SwitchState(GameState.InToy);
+    }
+
     public void BackToMenu()
     {
+        AudioManager.Ins.PlaySfx(SfxCue.UiBack);
         EnvironmentManager.Ins.SwitchToMenu();
         SwitchState(GameState.Menu);
     }

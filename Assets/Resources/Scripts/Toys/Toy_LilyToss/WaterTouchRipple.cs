@@ -45,6 +45,7 @@ public class WaterTouchRipple : MonoBehaviour
             return;
 
         lastRipplePos = worldPos;
+        AudioManager.Ins.PlaySfx(SfxCue.LilySplash);
         ParticleSystem ripple = Instantiate(touchRipplePrefab, worldPos, Quaternion.identity);
         ripple.Play();
         Destroy(ripple.gameObject, 1f);

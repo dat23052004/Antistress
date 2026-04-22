@@ -58,6 +58,7 @@ public class LilySpawner : MonoBehaviour
     {
         GameObject acero = Instantiate(aceroPrefab, aceroSlot.point.position, Quaternion.Euler(0, 0, Random.Range(0f, 360f)), transform);
         StartCoroutine(ScaleUp(acero.transform, 1f, 0.25f));
+        AudioManager.Ins.PlaySfx(SfxCue.LilySpawn);
         slot.occupied = true;
 
         acero.GetComponentInChildren<LilyPad>().mySlot = slot;
@@ -81,6 +82,7 @@ public class LilySpawner : MonoBehaviour
         float s = Random.Range(0.55f, 0.7f);
         StartCoroutine(DisableCollisionTemp(obj, 0.25f));
         StartCoroutine(ScaleUp(obj.transform, s, 0.25f));
+        AudioManager.Ins.PlaySfx(SfxCue.LilySpawn);
 
         // liệt kê slot
         slot.occupied = true;

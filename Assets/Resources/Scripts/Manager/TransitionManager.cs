@@ -23,7 +23,6 @@ public class TransitionManager : Singleton<TransitionManager>
 
     public void StartLoading(bool simple = false)
     {
-        
         simpleMode = simple;
         Debug.Log("Start Loading. Simple mode: " + simpleMode);
         if (progressRoutine != null)

@@ -16,6 +16,8 @@ public class BottoneButton : MonoBehaviour, IPointerDownHandler
     }
     public void OnPointerDown(PointerEventData eventData)
     {
+        AudioManager.Ins.PlaySfx(SfxCue.ToySwitchToggle);
+
         if(sr.sprite == bottoneOn) sr.sprite = bottoneOff;
         else sr.sprite = bottoneOn;
     }

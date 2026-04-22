@@ -43,6 +43,7 @@ public sealed class GessoController : MonoBehaviour
 
     private void Reset() => AutoAssignReferences();
     private void OnValidate() => AutoAssignReferences();
+    private void OnDestroy() => StopDrawingLoop();
 
     private void Update()
     {
@@ -78,6 +79,7 @@ public sealed class GessoController : MonoBehaviour
         hasLastMovementDirection = false;
         lastBoardPoint = worldPoint;
         MoveHeldToolToPointer(worldPoint);
+        StartSelectedToolLoop();
 
         if (selectedTool.ToolMode == GessoToolMode.Eraser)
         {
@@ -98,11 +100,12 @@ public sealed class GessoController : MonoBehaviour
         MoveHeldToolToPointer(worldPoint);
 
         if (board == null || selectedTool == null) { EndBoardSession(); return; }
-        if (!board.ContainsPoint(worldPoint)) { wasPointerInsideBoardLastFrame = false; return; }
+        if (!board.ContainsPoint(worldPoint)) { StopDrawingLoop(); wasPointerInsideBoardLastFrame = false; return; }
 
         if (!wasPointerInsideBoardLastFrame)
         {
             wasPointerInsideBoardLastFrame = true;
+            StartSelectedToolLoop();
             lastBoardPoint = worldPoint;
             if (selectedTool.ToolMode == GessoToolMode.Chalk)
             {
@@ -209,6 +212,7 @@ public sealed class GessoController : MonoBehaviour
     private void SelectTool(GessoToolButton tool)
     {
         if (tool == null) return;
+        AudioManager.Ins.PlaySfx(SfxCue.GessoToolSelect);
         if (selectedTool == tool) { EnsureHeldToolInstance(); tool.SetSelected(true); MoveHeldToolToStandby(); return; }
         if (selectedTool != null) selectedTool.SetSelected(false);
         selectedTool = tool;
@@ -275,6 +279,7 @@ public sealed class GessoController : MonoBehaviour
 
     private void EndBoardSession()
     {
+        StopDrawingLoop();
         isBoardSession = false;
         wasPointerInsideBoardLastFrame = false;
         lastBoardPoint = Vector2.zero;
@@ -282,6 +287,23 @@ public sealed class GessoController : MonoBehaviour
         cumulativeStrokeDistance = 0f;
         lastMovementDirection = Vector2.zero;
         hasLastMovementDirection = false;
+    }
+
+    private void StartSelectedToolLoop()
+    {
+        if (selectedTool == null)
+            return;
+
+        AudioManager.Ins.StartSfxLoop(
+            selectedTool.ToolMode == GessoToolMode.Eraser
+                ? SfxCue.GessoEraseLoop
+                : SfxCue.GessoChalkLoop);
+    }
+
+    private void StopDrawingLoop()
+    {
+        AudioManager.Ins.StopSfxLoop(SfxCue.GessoChalkLoop);
+        AudioManager.Ins.StopSfxLoop(SfxCue.GessoEraseLoop);
     }
 
     private void ResetSelectionState()

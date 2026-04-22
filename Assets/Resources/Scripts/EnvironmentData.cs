@@ -60,7 +60,6 @@ public class EnvironmentEntry
     public Vector3 cameraPosition;
     public Vector3 cameraRotation;
     public Material skybox;
-    public AudioClip backgroundMusic;
     public Color ambientColor = Color.white;
 }
 

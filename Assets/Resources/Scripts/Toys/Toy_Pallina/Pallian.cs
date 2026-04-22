@@ -24,11 +24,20 @@ public class Pallian : MonoBehaviour
     public float linearDefault = 0f;
     public float angularDefault = 0f;
 
+    [Header("Pointer Fallback")]
+    [SerializeField] private bool allowPointerFallbackInEditor = true;
+    [SerializeField] private bool allowPointerControlOnMobile = false;
+
+    [Header("Collision Audio")]
+    [SerializeField, Min(0f)] private float collisionSoundMinVelocity = 0.6f;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         cam = Camera.main;
 
+        // Pallina is driven by table tilt, not by Unity's global downward gravity.
+        rb.gravityScale = 0f;
         rb.linearDamping = linearDefault;
         rb.angularDamping = angularDefault;
         rb.freezeRotation = true;
@@ -36,6 +45,9 @@ public class Pallian : MonoBehaviour
 
     private void Update()
     {
+        if (!CanUsePointerControl())
+            return;
+
         HandlePointerInput();
     }
 
@@ -136,8 +148,41 @@ public class Pallian : MonoBehaviour
         if (tiltGravity == Vector2.zero)
             return;
 
-        Vector2 tiltForce = tiltGravity * rb.mass * rb.gravityScale;
+        Vector2 tiltForce = tiltGravity * rb.mass;
         rb.AddForce(tiltForce, ForceMode2D.Force);
+    }
+
+    private bool CanUsePointerControl()
+    {
+#if UNITY_EDITOR || UNITY_STANDALONE
+        return allowPointerFallbackInEditor;
+#else
+        return allowPointerControlOnMobile;
+#endif
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (!ShouldPlayBallCollisionSound(collision))
+            return;
+
+        AudioManager.Ins.PlaySfx(SfxCue.PallinaCollision);
+    }
+
+    private bool ShouldPlayBallCollisionSound(Collision2D collision)
+    {
+        if (collision == null || collision.rigidbody == null)
+            return false;
+
+        Pallian otherBall = collision.rigidbody.GetComponent<Pallian>();
+        if (otherBall == null || otherBall == this)
+            return false;
+
+        if (GetInstanceID() > otherBall.GetInstanceID())
+            return false;
+
+        float minVelocitySqr = collisionSoundMinVelocity * collisionSoundMinVelocity;
+        return collision.relativeVelocity.sqrMagnitude >= minVelocitySqr;
     }
 
     private void OnDrawGizmos()

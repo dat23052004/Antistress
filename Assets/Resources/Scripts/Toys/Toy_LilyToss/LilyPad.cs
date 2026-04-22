@@ -125,6 +125,7 @@ public class LilyPad : MonoBehaviour
             if (hit && hit.attachedRigidbody == rb)
             {
                 isDragging = true;
+                AudioManager.Ins.PlaySfx(SfxCue.LilyTouch);
                 OnPointerDownEvent?.Invoke(pointerWorld);
                 grabOffset = transform.InverseTransformPoint(pointerWorld);
                 lastPointerWorld = pointerWorld;

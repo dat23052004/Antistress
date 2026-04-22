@@ -1,0 +1,172 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b07d9e13f2942048aaf6b8c5407e77a, type: 3}
+  m_Name: AudioCueLibrary
+  m_EditorClassIdentifier: 
+  sfxEntries:
+  - cue: 0
+    clips:
+    - {fileID: 8300000, guid: 02ec127c6ea4f124b8dfe84da99db16d, type: 3}
+    volumeMultiplier: 1
+    pitchMin: 0.98
+    pitchMax: 1.02
+    cooldown: 0.04
+    loop: 0
+  - cue: 1
+    clips:
+    - {fileID: 8300000, guid: da3cce998dd71084fa193ae4ef29b11e, type: 3}
+    volumeMultiplier: 1
+    pitchMin: 0.98
+    pitchMax: 1.02
+    cooldown: 0.04
+    loop: 0
+  - cue: 2
+    clips:
+    - {fileID: 8300000, guid: 02ec127c6ea4f124b8dfe84da99db16d, type: 3}
+    volumeMultiplier: 0.9
+    pitchMin: 1
+    pitchMax: 1.05
+    cooldown: 0.08
+    loop: 0
+  - cue: 3
+    clips:
+    - {fileID: 8300000, guid: da3cce998dd71084fa193ae4ef29b11e, type: 3}
+    volumeMultiplier: 0.9
+    pitchMin: 0.95
+    pitchMax: 1
+    cooldown: 0.08
+    loop: 0
+  - cue: 4
+    clips:
+    - {fileID: 8300000, guid: 7bc01b5f6aab110428e9c145f60568a5, type: 3}
+    volumeMultiplier: 0.8
+    pitchMin: 1
+    pitchMax: 1
+    cooldown: 0.1
+    loop: 0
+  - cue: 6
+    clips:
+    - {fileID: 8300000, guid: 66aaa8cfb124a914e93d36b517377b15, type: 3}
+    volumeMultiplier: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+    cooldown: 0.08
+    loop: 0
+  - cue: 7
+    clips:
+    - {fileID: 8300000, guid: f401c7c356bd0544bac549f10554d6d9, type: 3}
+    volumeMultiplier: 1
+    pitchMin: 0.97
+    pitchMax: 1.03
+    cooldown: 0.04
+    loop: 0
+  - cue: 8
+    clips:
+    - {fileID: 8300000, guid: da3cce998dd71084fa193ae4ef29b11e, type: 3}
+    volumeMultiplier: 0.85
+    pitchMin: 0.97
+    pitchMax: 1.03
+    cooldown: 0.04
+    loop: 0
+  - cue: 9
+    clips:
+    - {fileID: 8300000, guid: 3e1ba650c545c7049a51b64f3978ce12, type: 3}
+    volumeMultiplier: 1
+    pitchMin: 0.96
+    pitchMax: 1.04
+    cooldown: 0.05
+    loop: 0
+  - cue: 10
+    clips:
+    - {fileID: 8300000, guid: 259549b4063e9a345b0036de3a3c3850, type: 3}
+    - {fileID: 8300000, guid: 117e8c9faabfd454493ec3ca910fcd22, type: 3}
+    - {fileID: 8300000, guid: 3f03111a782da544486a0cd1f0bfc3bd, type: 3}
+    - {fileID: 8300000, guid: 5fd5e2d3ea4d9794a89658cd43e62a57, type: 3}
+    volumeMultiplier: 1
+    pitchMin: 0.98
+    pitchMax: 1.02
+    cooldown: 0.03
+    loop: 0
+  - cue: 11
+    clips:
+    - {fileID: 8300000, guid: 234b9a30ba26ff9488f3e5367146b559, type: 3}
+    volumeMultiplier: 1
+    pitchMin: 0.35
+    pitchMax: 0.94
+    cooldown: 0.03
+    loop: 0
+  - cue: 12
+    clips:
+    - {fileID: 8300000, guid: 247094783dd4e0c4b9347eeff17787d6, type: 3}
+    volumeMultiplier: 0.8
+    pitchMin: 0.65
+    pitchMax: 1.31
+    cooldown: 0.5
+    loop: 0
+  - cue: 13
+    clips:
+    - {fileID: 8300000, guid: 2dd141cfd71d4284b80d287635ea1c93, type: 3}
+    - {fileID: 8300000, guid: 6247bd8967c9b5b4d97797f174f1eda9, type: 3}
+    volumeMultiplier: 1
+    pitchMin: 0.84
+    pitchMax: 1.39
+    cooldown: 0.12
+    loop: 0
+  - cue: 14
+    clips:
+    - {fileID: 8300000, guid: 234b9a30ba26ff9488f3e5367146b559, type: 3}
+    volumeMultiplier: 0.7
+    pitchMin: 0.95
+    pitchMax: 1.05
+    cooldown: 0.08
+    loop: 0
+  - cue: 16
+    clips:
+    - {fileID: 8300000, guid: 4bd7176e74ff3a94d99b4fb1971befae, type: 3}
+    volumeMultiplier: 0.9
+    pitchMin: 0.93
+    pitchMax: 1.05
+    cooldown: 0.12
+    loop: 0
+  - cue: 17
+    clips:
+    - {fileID: 8300000, guid: b8468e0b9aefdf548938e6de73527e18, type: 3}
+    - {fileID: 8300000, guid: 3aaa906a7fbdb744da5068018d6cb719, type: 3}
+    volumeMultiplier: 0.55
+    pitchMin: 1
+    pitchMax: 1.08
+    cooldown: 0.18
+    loop: 0
+  - cue: 18
+    clips:
+    - {fileID: 8300000, guid: 82d586eb9fad8bb45bbba1ffc05168c3, type: 3}
+    volumeMultiplier: 0.85
+    pitchMin: 0.95
+    pitchMax: 1.05
+    cooldown: 0.3
+    loop: 0
+  - cue: 19
+    clips:
+    - {fileID: 8300000, guid: d9fffd28c7fd7564480d89f3b49c7244, type: 3}
+    volumeMultiplier: 0.45
+    pitchMin: 0.95
+    pitchMax: 1.05
+    cooldown: 0.3
+    loop: 0
+  - cue: 15
+    clips:
+    - {fileID: 8300000, guid: c485a31aa82318343a19e5d921296c54, type: 3}
+    volumeMultiplier: 0.45
+    pitchMin: 0.95
+    pitchMax: 1.05
+    cooldown: 0.18
+    loop: 0

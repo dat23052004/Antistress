@@ -47,6 +47,9 @@ public class Block : MonoBehaviour
     public float maxTorque = 100f;
     public float gravityStrength = 3f;
 
+    [Header("Collision Audio")]
+    [SerializeField, Min(0f)] private float collisionSoundMinVelocity = 0.6f;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -164,6 +167,30 @@ public class Block : MonoBehaviour
                 lastThrowForce = Vector2.zero;
             }
         }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (!ShouldPlayBlockCollisionSound(collision))
+            return;
+
+        AudioManager.Ins.PlaySfx(SfxCue.WoodenCollision);
+    }
+
+    private bool ShouldPlayBlockCollisionSound(Collision2D collision)
+    {
+        if (collision == null || collision.rigidbody == null)
+            return false;
+
+        Block otherBlock = collision.rigidbody.GetComponent<Block>();
+        if (otherBlock == null || otherBlock == this)
+            return false;
+
+        if (GetInstanceID() > otherBlock.GetInstanceID())
+            return false;
+
+        float minVelocitySqr = collisionSoundMinVelocity * collisionSoundMinVelocity;
+        return collision.relativeVelocity.sqrMagnitude >= minVelocitySqr;
     }
 
     private void OnDrawGizmos()
