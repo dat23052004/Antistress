@@ -9,7 +9,6 @@ public class PallinaEnvironment : MonoBehaviour, IEnvironmentStart
         yield return new WaitForSeconds(0.2f);
         foreach (var ball in balls)
         {
-            Debug.Log(ball.name);
             Rigidbody2D rb = ball.GetComponentInChildren<Rigidbody2D>();
             if (rb == null) continue;
             rb.gravityScale = 0f;

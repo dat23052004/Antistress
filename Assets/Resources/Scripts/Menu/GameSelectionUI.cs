@@ -7,7 +7,6 @@ public class GameSelectionUI : MonoBehaviour
     [SerializeField] private GameObject drawerPrefab;
     [SerializeField] private Transform drawerContainer;
     [SerializeField] private GameObject drawerCustomerPrefab;
-    [SerializeField] private GameConfig gameConfig;
     [SerializeField] private EnvironmentData environmentData;
 
     private readonly List<GameObject> spawnedDrawers = new List<GameObject>();
@@ -40,13 +39,7 @@ public class GameSelectionUI : MonoBehaviour
         if (drawerCustomerPrefab != null)
             SpawnDrawer(drawerCustomerPrefab);
 
-        if (gameConfig == null)
-        {
-            Debug.LogWarning("GameSelectionUI could not find GameConfig. Game buttons were skipped.");
-            return;
-        }
-
-        BuildGameDrawers(gameConfig.games);
+        BuildGameDrawers(environmentData.GetEntriesByType(EnvironmentType.Game));
     }
 
     private void BuildToyDrawers(List<EnvironmentEntry> toys)
@@ -65,20 +58,17 @@ public class GameSelectionUI : MonoBehaviour
         }
     }
 
-    private void BuildGameDrawers(List<GameEntry> games)
+    private void BuildGameDrawers(List<EnvironmentEntry> games)
     {
-        if (games == null)
-            return;
-
         for (int i = 0; i < games.Count; i += 2)
         {
             GameObject drawer = SpawnDrawer(drawerPrefab);
             Button[] buttons = drawer.GetComponentsInChildren<Button>(true);
 
-            ConfigureGameButton(buttons, 0, games[i], i);
+            ConfigureGameButton(buttons, 0, games[i]);
 
             if (i + 1 < games.Count)
-                ConfigureGameButton(buttons, 1, games[i + 1], i + 1);
+                ConfigureGameButton(buttons, 1, games[i + 1]);
             else
                 HideButton(buttons, 1);
         }
@@ -102,7 +92,7 @@ public class GameSelectionUI : MonoBehaviour
         button.name = $"Toy_{toy.displayName}";
     }
 
-    private void ConfigureGameButton(Button[] buttons, int buttonIndex, GameEntry game, int gameIndex)
+    private void ConfigureGameButton(Button[] buttons, int buttonIndex, EnvironmentEntry game)
     {
         if (buttons.Length <= buttonIndex || game == null)
             return;
@@ -115,7 +105,8 @@ public class GameSelectionUI : MonoBehaviour
         if (image != null)
             image.sprite = game.icon;
 
-        button.onClick.AddListener(() => UIManager.Ins.OneGameSelection(gameIndex));
+        int gameId = game.environmentId;
+        button.onClick.AddListener(() => UIManager.Ins.OneGameSelection(gameId));
         button.name = $"Game_{game.displayName}";
     }
 
@@ -147,8 +138,5 @@ public class GameSelectionUI : MonoBehaviour
     {
         if (environmentData == null)
             environmentData = Resources.Load<EnvironmentData>("Prefabs/EnvironmentData");
-
-        if (gameConfig == null)
-            gameConfig = Resources.Load<GameConfig>("Prefabs/GameConfig");
     }
 }

@@ -18,7 +18,6 @@ public class EnvironmentManager : Singleton<EnvironmentManager>
     public void SwitchToMenu() => LoadEnvironmentByType(EnvironmentType.Menu, 0);
     public void SwitchToToy(int toyId) => LoadEnvironmentByType(EnvironmentType.Toy, toyId);
     public void SwitchToGame(int gameIndex) => LoadEnvironmentByType(EnvironmentType.Game, gameIndex);
-
     public bool SwitchToRandomPlayableEnvironment(out EnvironmentType selectedType)
     {
         selectedType = EnvironmentType.Menu;
@@ -146,8 +145,6 @@ public class EnvironmentManager : Singleton<EnvironmentManager>
     private void ApplyEnvironmentSettings(EnvironmentEntry env)
     {
         CameraManager.Ins.SetToPositionInstant(env.cameraPosition, env.cameraRotation);
-
-        if (env.skybox != null)
-            RenderSettings.skybox = env.skybox;
     }
+
 }

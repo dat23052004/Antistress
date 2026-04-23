@@ -40,6 +40,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cf46d68023d28064d91d2c8e1929c41b
+    m_Address: Game_TapMatch
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ff4217d59f896314b961b56bdc39a5be
     m_Address: Toy_ButtonSwitch
     m_ReadOnly: 0

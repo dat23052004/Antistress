@@ -20,8 +20,6 @@ MonoBehaviour:
     environmentKey: 
     cameraPosition: {x: 0, y: 0, z: -10}
     cameraRotation: {x: 0, y: 0, z: 0}
-    skybox: {fileID: 0}
-    ambientColor: {r: 0, g: 0, b: 0, a: 0}
   - environmentId: 1
     type: 2
     displayName: ButtonSwitch
@@ -29,8 +27,6 @@ MonoBehaviour:
     environmentKey: Toy_ButtonSwitch
     cameraPosition: {x: 0, y: 0, z: -10}
     cameraRotation: {x: 0, y: 0, z: 0}
-    skybox: {fileID: 0}
-    ambientColor: {r: 0.8238993, g: 0.4430401, b: 0.4430401, a: 0}
   - environmentId: 0
     type: 2
     displayName: Cubetti
@@ -38,8 +34,6 @@ MonoBehaviour:
     environmentKey: Toy_WoodenBlocks
     cameraPosition: {x: 0, y: 0, z: -10}
     cameraRotation: {x: 0, y: 0, z: 0}
-    skybox: {fileID: 0}
-    ambientColor: {r: 0.8238993, g: 0.4430401, b: 0.4430401, a: 0}
   - environmentId: 2
     type: 2
     displayName: Ninfee
@@ -47,8 +41,6 @@ MonoBehaviour:
     environmentKey: Toy_LilyToss
     cameraPosition: {x: 0, y: 0, z: -10}
     cameraRotation: {x: 0, y: 0, z: 0}
-    skybox: {fileID: 0}
-    ambientColor: {r: 0.8238993, g: 0.4430401, b: 0.4430401, a: 0}
   - environmentId: 3
     type: 2
     displayName: Palle
@@ -56,8 +48,6 @@ MonoBehaviour:
     environmentKey: Toy_Pallina
     cameraPosition: {x: 0, y: 0, z: -10}
     cameraRotation: {x: 0, y: 0, z: 0}
-    skybox: {fileID: 0}
-    ambientColor: {r: 0.8238993, g: 0.4430401, b: 0.4430401, a: 0}
   - environmentId: 4
     type: 2
     displayName: RevealLeaves
@@ -65,8 +55,6 @@ MonoBehaviour:
     environmentKey: Toy_RevealLeaves
     cameraPosition: {x: 0, y: 0, z: -10}
     cameraRotation: {x: 0, y: 0, z: 0}
-    skybox: {fileID: 0}
-    ambientColor: {r: 0.8238993, g: 0.4430401, b: 0.4430401, a: 0}
   - environmentId: 5
     type: 2
     displayName: Toy_Gesso
@@ -74,5 +62,10 @@ MonoBehaviour:
     environmentKey: Toy_Gesso
     cameraPosition: {x: 0, y: 0, z: -10}
     cameraRotation: {x: 0, y: 0, z: 0}
-    skybox: {fileID: 0}
-    ambientColor: {r: 0.8238993, g: 0.4430401, b: 0.4430401, a: 0}
+  - environmentId: 6
+    type: 1
+    displayName: Game_TapMatch
+    icon: {fileID: 21300000, guid: 34fad517263fc584fb59e0ab1b1cd031, type: 3}
+    environmentKey: Game_TapMatch
+    cameraPosition: {x: 0, y: 0, z: -10}
+    cameraRotation: {x: 0, y: 0, z: 0}

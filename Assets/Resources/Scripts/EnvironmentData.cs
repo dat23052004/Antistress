@@ -59,8 +59,6 @@ public class EnvironmentEntry
     [Header("Environment Settings")]
     public Vector3 cameraPosition;
     public Vector3 cameraRotation;
-    public Material skybox;
-    public Color ambientColor = Color.white;
 }
 
 public enum EnvironmentType
