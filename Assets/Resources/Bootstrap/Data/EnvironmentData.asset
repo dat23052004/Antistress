@@ -69,3 +69,10 @@ MonoBehaviour:
     environmentKey: Game_TapMatch
     cameraPosition: {x: 0, y: 0, z: -10}
     cameraRotation: {x: 0, y: 0, z: 0}
+  - environmentId: 7
+    type: 1
+    displayName: Game_Memory
+    icon: {fileID: 21300000, guid: 37ab973ccfb53b747a2fb480cb8f2988, type: 3}
+    environmentKey: Game_Memory
+    cameraPosition: {x: 0, y: 0, z: -10}
+    cameraRotation: {x: 0, y: 0, z: 0}

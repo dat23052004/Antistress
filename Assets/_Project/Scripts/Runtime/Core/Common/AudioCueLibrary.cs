@@ -26,6 +26,10 @@ public enum SfxCue
     GessoEraseLoop,
     Tile_Click,
     Tile_Solve,
+    Card_Flip,
+    Card_Mismatch,
+    Card_Match,
+    Card_Win,
 }
 
 [Serializable]
