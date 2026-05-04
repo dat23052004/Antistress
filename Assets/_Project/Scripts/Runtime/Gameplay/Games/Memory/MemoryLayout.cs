@@ -1,44 +1,41 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "MemoryLayout", menuName = "Memory/Layout")]
 public class MemoryLayout : ScriptableObject
 {
-    [Tooltip("Mỗi string = 1 hàng. '1' = có thẻ, '0' hoặc '_' = trống.")]
-    public string[] rows;
-    public float cellSize = 90f;
-    public float spacing = 12f;
-
-    public List<Vector2Int> GetPositions()
+    [System.Serializable]
+    public class RowData
     {
-        var result = new List<Vector2Int>();
-        if (rows == null) return result;
+        public int count = 4;
+        [Tooltip("Khoảng cách ngang giữa các thẻ trong hàng.")]
+        public float xSpacing = 12f;
+        [Tooltip("Dịch ngang tính theo đơn vị cell. 0 = canh giữa, 0.5 = xen kẽ nửa ô.")]
+        public float xOffset = 0f;
+    }
 
-        for (int r = 0; r < rows.Length; r++)
+    public RowData[] rows;
+    [Tooltip("Khoảng cách dọc giữa các hàng.")]
+    public float ySpacing = 12f;
+    [Tooltip("Kích thước mỗi thẻ (width = height).")]
+    public float cardSize = 90f;
+
+    public int TotalCards
+    {
+        get
         {
-            string row = rows[r];
-            if (string.IsNullOrEmpty(row)) continue;
-            for (int c = 0; c < row.Length; c++)
-            {
-                if (row[c] == '1')
-                    result.Add(new Vector2Int(c, r));
-            }
+            int total = 0;
+            if (rows != null) foreach (var r in rows) total += r.count;
+            return total;
         }
-        return result;
     }
 
-    public bool IsValid()
-    {
-        int count = GetPositions().Count;
-        return count > 0 && count % 2 == 0;
-    }
+    public bool IsValid() => TotalCards > 0 && TotalCards % 2 == 0;
 
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        int count = GetPositions().Count;
-        if (count > 0 && count % 2 != 0)
-            Debug.LogWarning($"[MemoryLayout] '{name}': {count} thẻ — phải là số chẵn để tạo cặp.");
+        if (TotalCards % 2 != 0)
+            Debug.LogWarning($"[MemoryLayout] '{name}': tổng {TotalCards} thẻ — phải là số chẵn.");
     }
 #endif
 }

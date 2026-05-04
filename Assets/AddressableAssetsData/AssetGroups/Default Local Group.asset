@@ -35,6 +35,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8d8f474d6f256d341af127ae37be28d9
+    m_Address: Game_Memory
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 901d92c43ae1bd148bc0d9f26ccb5f56
     m_Address: Toy_WoodenBlocks
     m_ReadOnly: 0
