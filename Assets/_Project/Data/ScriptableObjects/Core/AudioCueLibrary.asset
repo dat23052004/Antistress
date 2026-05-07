@@ -186,3 +186,27 @@ MonoBehaviour:
     pitchMax: 1.02
     cooldown: 0.08
     loop: 0
+  - cue: 22
+    clips:
+    - {fileID: 8300000, guid: f6d2fbb6518b84446a7e89b8660afbb5, type: 3}
+    volumeMultiplier: 1.71
+    pitchMin: 0.9
+    pitchMax: 0.9
+    cooldown: 0.2
+    loop: 0
+  - cue: 23
+    clips:
+    - {fileID: 8300000, guid: 1f19b537e0ddd3249894f761bdded7e4, type: 3}
+    volumeMultiplier: 0.92
+    pitchMin: 1
+    pitchMax: 1
+    cooldown: 0.2
+    loop: 0
+  - cue: 24
+    clips:
+    - {fileID: 8300000, guid: 02a2c95bf5fda6941b99ad45631310f5, type: 3}
+    volumeMultiplier: 0.7
+    pitchMin: 1
+    pitchMax: 1
+    cooldown: 0.2
+    loop: 0
